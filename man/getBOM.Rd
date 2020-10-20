@@ -5,7 +5,7 @@
 \title{getBOM
 This function processes climate data from BOM including temp, rainfall,}
 \usage{
-getBOM(update)
+getBOM(update, ClimatePath)
 }
 \arguments{
 \item{update}{}
@@ -18,5 +18,5 @@ getBOM
 This function processes climate data from BOM including temp, rainfall,
 }
 \examples{
-getBOM(update=FALES)
+\dontrun {getBOM(update=FALSE, ClimatePath="PathtoClimateData")}
 }

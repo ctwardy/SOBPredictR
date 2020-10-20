@@ -20,5 +20,5 @@ GetSoil Data
 #this function gets soil data i.e. clay, sand ect... by longitude and latitude
 }
 \examples{
-get.soil.data(lat=37.8, lon1=-144)
+\dontrun {get.soil.data(lat=37.8, lon1=-144)}
 }

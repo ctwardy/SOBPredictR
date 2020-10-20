@@ -14,7 +14,8 @@ import_data(
   minTemp,
   maxTemp,
   soilData,
-  GISdata
+  GISdata,
+  ClimatePath
 )
 }
 \arguments{
@@ -44,5 +45,5 @@ Import
 This function is to import all requird data sources for
 }
 \examples{
-import_data(AssetPath="~Data/assetData.csv")
+\dontrun {import_data(AssetPath="~Data/assetData.csv")}
 }

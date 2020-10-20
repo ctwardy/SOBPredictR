@@ -26,5 +26,5 @@ The cleaning steps ensures there are no duplicates and that the data is consiste
 }
 }
 \examples{
-data_wrangle(imported_data)
+ \dontrun {data_wrangle(imported_data)}
 }
