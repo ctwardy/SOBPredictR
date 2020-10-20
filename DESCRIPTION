@@ -1,16 +1,19 @@
 Package: SOBPredictR
-Title: What the Package Does (One Line, Title Case)
+Title: Analysis and Predictive Modelling of Water Main Failures
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Brendan",
+           family = "Gladman",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
+           email = "b.gladman@gmail.com",
            comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to
-    pick a license
+Description: Imports and analyses asset and work order information in order to predict whether a Shut Off Block will experience a failure  
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
+Imports: 
+    dplyr,
+    lubridate,
+    ggplot2
