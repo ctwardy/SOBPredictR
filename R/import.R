@@ -10,14 +10,14 @@
 #' @return  date frame of climate data
 #' @export
 #'
-#' @examples getBOM(update=FALES)
-getBOM <- function(update) {
+#' @examples \dontrun {getBOM(update=FALSE, ClimatePath="PathtoClimateData")}
+getBOM <- function(update, ClimatePath) {
 
   # pulls in and reformats data to be updated
   if (update) {
 
     # read in current data
-    read.csv("Data/climate.csv", header = TRUE) -> climate_data_existing
+    utils::read.csv(ClimatePath, header = TRUE) -> climate_data_existing
     climate_data_existing$Date <- as.Date(climate_data_existing$Date)
     start <- as.Date(last(climate_data_existing$Date))
     start2 <- as.Date("1995/01/01")
@@ -26,7 +26,7 @@ getBOM <- function(update) {
 
     # get data from correct stations
     sweep_for_stations(c(-37.80, 145.15)) -> stations
-    head(stations, 10)
+    utils::head(stations, 10)
     stations$site[9] -> stationID
     get_historical(stationID, type = c("min")) -> min_temp
     get_historical(stationID, type = c("max")) -> max_temp
@@ -51,17 +51,17 @@ getBOM <- function(update) {
       "%Y-%m-%d"
     )
 
-    min_temp %>% dplyr::select(Date, min_temperature) -> min_temp
-    max_temp %>% dplyr::select(Date, max_temperature) -> max_temp
-    rain %>% dplyr::select(Date, rainfall) -> rain
-    solar %>% dplyr::select(Date, solar_exposure) -> solar
+    dplyr::select(min_temp, Date, min_temperature) -> min_temp
+    dplyr::select(max_temp, Date, max_temperature) -> max_temp
+    dplyr::select(rain, Date, rainfall) -> rain
+    dplyr::select(solar, Date, solar_exposure) -> solar
     solar[is.na(solar$solar_exposure), "solar_exposure"] <- 0
 
     # combining different climate data
     merge(min_temp, max_temp, by = "Date", all = TRUE) -> climate
     merge(climate, rain) -> climate
     merge(climate, solar) -> climate
-    climate %>% filter(Date > start) -> climate
+    climate %>% dplyr::filter(Date > start) -> climate
     climate$Date -> Date
 
     # combine old with new data
@@ -71,11 +71,11 @@ getBOM <- function(update) {
     summary(my_data)
     my_data$Date -> Date2
     nrow(my_data) -> A
-    sum(complete.cases(my_data)) -> B
+    sum(stats::complete.cases(my_data)) -> B
 
     # checks rows against complete cases if not same smooth data
     if (B < A) {
-      as.ts(my_data$Date) -> my_data$Date
+      stats::as.ts(my_data$Date) -> my_data$Date
       t(my_data) -> tmy.data2
 
       tmy.data2[2:nrow(tmy.data2), ] -> tmy.data2
@@ -87,8 +87,8 @@ getBOM <- function(update) {
         print(paste0("running ", j, " of ", nrow(tmy.data2)))
         tmy.data2[j, ] -> x
 
-        kemfit2 <- MARSS(x)
-        kf2 <- MARSSkfss(kemfit2)
+        kemfit2 <- MARSS::MARSS(x)
+        kf2 <- MARSS::MARSSkfss(kemfit2)
         kf2$xtT[1, ] -> xhat[[j]]
       }
 
@@ -100,37 +100,10 @@ getBOM <- function(update) {
       df_imputed -> climate
     }
 
-    saveRDS(climate, "Data/climate.RDS")
-  } else {
-    readRDS("Data/climate.RDS") -> climate
   }
 
   return(climate)
 }
-
-
-
-#' Modified Coalesce
-#' Coalesce two dataframes
-#' @param ...
-#'
-#' @return dataframe
-#' @export
-#'
-#' @examples getBOM(update=TRUE)
-coalesce2 <- function(...) {
-  Reduce(
-    function(x, y) {
-      levels(y) -> levy
-      levels(x) <- c(levels(x), levy)
-      i <- which(is.na(x))
-      x[i] <- y[i]
-      x
-    },
-    list(...)
-  )
-}
-
 
 
 #' GetSoil Data
@@ -142,7 +115,7 @@ coalesce2 <- function(...) {
 #' @return
 #' @export
 #'
-#' @examples get.soil.data(lat=37.8, lon1=-144)
+#' @examples \dontrun {get.soil.data(lat=37.8, lon1=-144)}
 get.soil.data <- function(lat1, lon1) {
 
   # Get unique soil data by long and lat
@@ -172,8 +145,8 @@ get.soil.data <- function(lat1, lon1) {
 #' @return  list
 #' @export
 #'
-#' @examples import_data(AssetPath="~Data/assetData.csv")
-import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath, rainfall, minTemp, maxTemp, soilData, GISdata) {
+#' @examples \dontrun {import_data(AssetPath="~Data/assetData.csv")}
+import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath, rainfall, minTemp, maxTemp, soilData, GISdata, ClimatePath) {
 
   # Read #Keep this for Total Asset Statistics
   data.table::fread(AssetPath, header = TRUE, sep = ",", fill = TRUE) -> asset_data
@@ -181,7 +154,7 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
   make.names(colnames(asset_data), unique = TRUE) -> colnames(asset_data)
 
   # Read in climate data
-  getBOM(update = FALSE) -> climate_data
+  getBOM(update = FALSE, ClimatePath) -> climate_data
 
   # Core work order data from BI
   # Combine work orders from multiple files
@@ -189,7 +162,7 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
   data.table::fread(WorkOrderPath, header = T, sep = ",", fill = TRUE) ->
     work_orders
 
-  as.Date(ymd_hms(work_orders$`Reported Date`)) -> work_orders$`Reported Date`
+  as.Date(lubridate::ymd_hms(work_orders$`Reported Date`)) -> work_orders$`Reported Date`
 
   AddData <- function(path) {
     data.table::fread(path, header = T, sep = ",", fill = TRUE) -> work_orders_2019
@@ -213,7 +186,7 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
     work_orders_2019[!work_orders_2019[, Pos] %in% work_orders[, Pos2], ] ->
       work_orders_2019
 
-    as.Date(ymd_hms(work_orders_2019$Reported.Date)) ->
+    as.Date(lubridate::ymd_hms(work_orders_2019$Reported.Date)) ->
       work_orders_2019$Reported.Date
 
     max(work_orders_2019$Reported.Date, na.rm = TRUE)
@@ -222,13 +195,10 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
     max(work_orders$Reported.Date, na.rm = TRUE)
     min(work_orders$Reported.Date, na.rm = TRUE)
 
-    work_orders %>% arrange(desc(Reported.Date)) -> work_orders
-    work_orders_2019 %>% arrange(desc(Reported.Date)) -> work_orders_2019
+    dplyr::arrange(work_orders, dplyr::desc(Reported.Date)) -> work_orders
+    dplyr::arrange(work_orders_2019, dplyr::desc(Reported.Date)) -> work_orders_2019
 
-    nrow(work_orders)
-    nrow(work_orders_2019)
     rbind(work_orders_2019, work_orders) -> work_orders
-    nrow(work_orders)
     return(work_orders)
   }
 
@@ -249,8 +219,8 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
   make.names(colnames(work_orders_pre2015), unique = TRUE) ->
     colnames(work_orders_pre2015)
 
-  work_orders %>% arrange(Reported.Date) -> work_orders
-  work_orders_pre2015 %>% arrange(Problem.Date.Time) -> work_orders_pre2015
+  dplyr::arrange(work_orders, Reported.Date) -> work_orders
+  dplyr::arrange(work_orders_pre2015, Problem.Date.Time) -> work_orders_pre2015
 
   # Get Soil Data
   current.list <- list.files(
@@ -277,13 +247,15 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
     static_pressure
 
   # Read in static pressure data
-  static_pressure %>%
-    dplyr::select(
+
+    dplyr::select(static_pressure,
       SHUTOFF_BLOCK, ASSETID, X_1, Y_1, Z_1, X_2, Z_1, Z_2,
       Static_Pressure_Final
-    ) %>%
-    dplyr::filter(!Z_1 %in% NA) %>%
-    as.data.frame() -> static_pressure_reduced
+    ) ->temp1
+
+
+    dplyr::filter(temp1, !Z_1 %in% NA) ->temp2
+    as.data.frame(temp2) -> static_pressure_reduced
 
   # save as list
   data.frame.list <- list(
@@ -295,3 +267,7 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
 
   return(data.frame.list)
 }
+
+
+
+

@@ -1,3 +1,23 @@
+#' Modified Coalesce
+#' Coalesce two dataframes
+#' @param ...
+#'
+#' @return dataframe
+#' @export
+#'
+#' @examples \dontrun {coalesce2(x, y)}
+coalesce2 <- function(...) {
+  Reduce(
+    function(x, y) {
+      levels(y) -> levy
+      levels(x) <- c(levels(x), levy)
+      i <- which(is.na(x))
+      x[i] <- y[i]
+      x
+    },
+    list(...)
+  )
+}
 
 
 #' Data Wrangle
@@ -10,7 +30,7 @@
 #' @return list of cleaned data frames;  asset data and work order data
 #' @export
 #'
-#' @examples data_wrangle(imported_data)
+#' @examples  \dontrun {data_wrangle(imported_data)}
 data_wrangle <- function(imported_data) {
   imported_data[[1]] -> work_orders_pre2015
   imported_data[[2]] -> work_orders
@@ -121,7 +141,7 @@ data_wrangle <- function(imported_data) {
   drops <- c("Water.Off.Duration", "ï..Service.Request.Number")
   work_orders_pre2015[, !(names(work_orders_pre2015) %in% drops)] ->
     work_orders_pre2015
-  head(work_orders_pre2015)
+  utils::head(work_orders_pre2015)
 
   # Combine Installation Date for different assets
   coalesce2(
@@ -168,7 +188,7 @@ data_wrangle <- function(imported_data) {
 
 
   # combine work order data sets and clean new data set
-  left_join(work_orders, work_orders_pre2015,
+  dplyr::left_join(work_orders, work_orders_pre2015,
             by =
               c("Work.Order.Number" = "Work.Order.Number")
   ) -> work_orders_joined
@@ -188,7 +208,7 @@ data_wrangle <- function(imported_data) {
     work_orders_joined$Install.Date.x,
     work_orders_joined$Install.Date.y
   ) -> work_orders_joined$Install.Date
-  as.Date(ymd_hms(work_orders_joined$Install.Date)) ->
+  as.Date(lubridate::ymd_hms(work_orders_joined$Install.Date)) ->
     work_orders_joined$Install.Date
   drops <- c("Install.Date.x", "Install.Date.y")
   work_orders_joined[, !(names(work_orders_joined) %in% drops)] ->
@@ -252,7 +272,7 @@ data_wrangle <- function(imported_data) {
   combined.df %>%
     dplyr::group_by(Work.Order.Number) %>%
     dplyr::filter(n() > 1) %>%
-    arrange(Work.Order.Number) %>%
+    dplyr::arrange(Work.Order.Number) %>%
     dplyr::summarise(
       Number.of.Work.Order.Water.Outages =
         max(Number.of.Work.Order.Water.Outages)
@@ -299,8 +319,8 @@ data_wrangle <- function(imported_data) {
   gc()
 
   # convert date time
-  ymd_hms(combined.df$Water.Off.Date.Time) -> combined.df$Water.Off.Date.Time
-  ymd_hms(combined.df$Water.On.Date.Time) -> combined.df$Water.On.Date.Time
+  lubridate::ymd_hms(combined.df$Water.Off.Date.Time) -> combined.df$Water.Off.Date.Time
+  lubridate::ymd_hms(combined.df$Water.On.Date.Time) -> combined.df$Water.On.Date.Time
 
   # reduce list of repair types, shift to before duplicates
   # (this is reducing number of work orders significantly)
@@ -338,7 +358,7 @@ data_wrangle <- function(imported_data) {
   combined.df %>%
     dplyr::arrange(Asset.Number, Reported.Date) %>%
     dplyr::group_by(Asset.Number) %>%
-    mutate(time_since_asset_failure = as.numeric
+    dplyr::mutate(time_since_asset_failure = as.numeric
            (difftime(Reported.Date, dplyr::lag(Reported.Date),
                      units = "days"
            ))) -> asset_data
