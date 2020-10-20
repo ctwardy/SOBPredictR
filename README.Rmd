@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of SOBPredictR is to ...
+The goal of SOBPredictR is to predict which Shut off block will fail ...
 
 ## Installation
 
