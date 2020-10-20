@@ -16,4 +16,9 @@ RoxygenNote: 7.1.1
 Imports: 
     dplyr,
     lubridate,
-    ggplot2
+    ggplot2,
+    stats,
+    utils,
+    magrittr,
+    MARSS,
+    data.table
