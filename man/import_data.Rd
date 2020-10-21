@@ -15,7 +15,9 @@ import_data(
   maxTemp,
   soilData,
   GISdata,
-  ClimatePath
+  ClimatePath,
+  SOBAsset,
+  SOBHistoric
 )
 }
 \arguments{

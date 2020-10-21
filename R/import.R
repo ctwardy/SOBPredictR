@@ -98,9 +98,10 @@ getBOM <- function(update, ClimatePath) {
       cbind("DATE" = Date2, df_imputed) -> df_imputed
       colnames(df_imputed) <- colnames(climate)
       df_imputed -> climate
+      utils::write.csv(climate, ClimatePath, row.names = FALSE) -> climate
     }
-
-  }
+  }else
+    {utils::read.csv(ClimatePath, header = TRUE) -> climate}
 
   return(climate)
 }
@@ -146,7 +147,7 @@ get.soil.data <- function(lat1, lon1) {
 #' @export
 #'
 #' @examples \dontrun {import_data(AssetPath="~Data/assetData.csv")}
-import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath, rainfall, minTemp, maxTemp, soilData, GISdata, ClimatePath) {
+import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath, rainfall, minTemp, maxTemp, soilData, GISdata, ClimatePath, SOBAsset, SOBHistoric) {
 
   # Read #Keep this for Total Asset Statistics
   data.table::fread(AssetPath, header = TRUE, sep = ",", fill = TRUE) -> asset_data
@@ -229,8 +230,8 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
   )
   out <- list()
   for (i in 1:length(current.list)) {
-    SOIL_dem <- raster(x = current.list[[i]])
-    xyz <- rasterToPoints(SOIL_dem)
+    SOIL_dem <- raster::raster(x = current.list[[i]])
+    xyz <- raster::rasterToPoints(SOIL_dem)
     xyz[, 3] -> out[[i]]
     xyz[, c(1:2)] -> xycoord
   }
@@ -257,12 +258,33 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
     dplyr::filter(temp1, !Z_1 %in% NA) ->temp2
     as.data.frame(temp2) -> static_pressure_reduced
 
+
+    #Read in SOB data
+
+    # read in table of Asset Number, SLID and SOBIDs
+    data.table::fread(SOBAsset, header = TRUE, sep = ",", fill = TRUE) -> SOBAsset
+    data.table::fread(SOBHistoric, header = TRUE, sep = ",", fill = TRUE) -> SOBAsset2020
+
+    colnames(SOBAsset2020)[1] <- "Asset.Number"
+    colnames(SOBAsset2020)[2] <- "Shutoff.Block"
+    as.numeric(SOBAsset2020$Asset.Number) -> SOBAsset2020$Asset.Number
+    as.numeric(SOBAsset2020$Shutoff.Block) -> SOBAsset2020$Shutoff.Block
+
+
   # save as list
   data.frame.list <- list(
-    work_orders_pre2015, work_orders, asset_data,
-    raindfall.GRID, mintemp.GRID, maxtemp.GRID, climate_data,
+    work_orders_pre2015,
+    work_orders,
+    asset_data,
+    raindfall.GRID,
+    mintemp.GRID,
+    maxtemp.GRID,
+    climate_data,
     soil_table,
-    static_pressure_reduced
+    static_pressure_reduced,
+    SOBAsset,
+    SOBAsset2020
+
   )
 
   return(data.frame.list)

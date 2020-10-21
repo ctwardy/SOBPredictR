@@ -36,6 +36,7 @@ data_wrangle <- function(imported_data) {
   imported_data[[2]] -> work_orders
   imported_data[[3]] -> asset_data
 
+
   # clean and process asset data
   coalesce2(asset_data$Pipe.Material, asset_data$Pipe.Material.1) ->
     asset_data$Pipe.Material
@@ -124,7 +125,7 @@ data_wrangle <- function(imported_data) {
   # Removes work order rows for infrequent(<500) asset classes
   work_orders %>%
     dplyr::group_by(Class.Structure.1) %>%
-    dplyr::filter(n() >= 500) %>%
+    dplyr::filter(dplyr::n() >= 500) %>%
     droplevels() %>%
     as.data.frame() -> work_orders
 
@@ -271,7 +272,7 @@ data_wrangle <- function(imported_data) {
   # consolidate duplicated work order ID and find the Max No. SLIDS affected
   combined.df %>%
     dplyr::group_by(Work.Order.Number) %>%
-    dplyr::filter(n() > 1) %>%
+    dplyr::filter(dplyr::n() > 1) %>%
     dplyr::arrange(Work.Order.Number) %>%
     dplyr::summarise(
       Number.of.Work.Order.Water.Outages =
@@ -292,7 +293,7 @@ data_wrangle <- function(imported_data) {
   combined.df[is.na(combined.df$Number.of.Work.Order.Water.Outages), ] -> NAoutages
   combined.df[combined.df$Number.of.Work.Order.Water.Outages == 0, ] -> Notoutages
 
-  as.Date(last(work_orders_pre2015$Reported.Date)) -> transitionDate
+  as.Date(dplyr::last(work_orders_pre2015$Reported.Date)) -> transitionDate
 
   nrow(combined.df)
 
@@ -309,7 +310,7 @@ data_wrangle <- function(imported_data) {
   nrow(combined.df)
   combined.df %>%
     dplyr::group_by(Asset.Number) %>%
-    dplyr::mutate(Nworkordersperasset = n()) %>%
+    dplyr::mutate(Nworkordersperasset = dplyr::n()) %>%
     as.data.frame() -> work_orders
 
   # remove previous data files
@@ -346,7 +347,7 @@ data_wrangle <- function(imported_data) {
   combined.df %>%
     dplyr::arrange(Reported.Date) %>%
     dplyr::group_by(Shutoff.Block) %>%
-    dplyr::mutate(totalNpershutoffblock = n()) -> combined.df
+    dplyr::mutate(totalNpershutoffblock = dplyr::n()) -> combined.df
 
   # total outages by asset ID
   combined.df %>%
@@ -361,8 +362,26 @@ data_wrangle <- function(imported_data) {
     dplyr::mutate(time_since_asset_failure = as.numeric
            (difftime(Reported.Date, dplyr::lag(Reported.Date),
                      units = "days"
-           ))) -> asset_data
+           ))) -> combined.df
 
-  cleanedData <- list(asset_data, asset_data)
+  cleanedData <- list(asset_data, combined.df)
   return(cleanedData)
+}
+
+# compares WO DF SOBs and the SOBs in the 2020 Asset/SOB for potential changes to SOB/asset membership
+SOB_asset_check <- function(ID, df) {
+  SOBAsset2020 %>%
+    dplyr::filter(Shutoff.Block == ID) %>%
+    dplyr::select(Asset.Number) %>%
+    as.vector() -> AssetsinSOB
+  df %>%
+    dplyr::filter(Shutoff.Block == ID) %>%
+    dplyr::distinct(Asset.Number) -> Assets_with_WO
+
+  as.numeric(Assets_with_WO$Asset.Number) -> Assets_with_WO
+
+  AssetsinSOB$Asset.Number -> AssetsinSOB
+
+  length(Assets_with_WO) / length(match(Assets_with_WO, AssetsinSOB)) * 100 -> percent
+  return(percent)
 }
