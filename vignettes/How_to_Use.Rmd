@@ -1,0 +1,131 @@
+---
+title: "How_to_Use"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{How_to_Use}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(SOBPredictR)
+```
+
+
+```{r}
+import_data(AssetPath=AssetPath,
+            WorkOrderPath=WorkOrderPath,
+            newWorkOrdersPath=newworkordersPAth,
+            HansenPath = HansenPath,
+            rainfall=rainfall,
+            ClimatePath=ClimateData,
+            minTemp=minTemp,
+            maxTemp=maxTemp,
+            soilData = soilData,
+            SOBSLID = "C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/SOBSLIDnew.csv",
+            GISdata = GISdata)->importedData
+
+saveRDS(importedData, "C:/Users/bgladman/OneDrive/DataProjects/YVW/PackageOutputs/importedData.RDS")
+```
+
+```{r}
+data_wrangle(importedData) -> CleanedData
+saveRDS(CleanedData, "C:/Users/bgladman/OneDrive/DataProjects/YVW/PackageOutputs/CleanedData.RDS")
+
+
+#how many SOBs are missing?  quire a few.  what does this mean,  is it right to sub in from asset.  probably not
+table(is.na(CleanedData[[1]]$Shutoff.Block))
+CleanedData[[1]][is.na(CleanedData[[1]]$Shutoff.Block),]->NASOBWOs
+
+#majority of non SOB Work orders are for hydrant and isolation valve assets
+#Question is it appropriate to use the SOB mapped to asset ID to assign SOB to these work orders
+table(NASOBWOs$Class.Structure)
+
+```
+
+
+```{r}
+calcNSLIDS(imported_data=importedData, df=CleanedData[[2]]) -> WO_SLIDS
+saveRDS(WO_SLIDS, "C:/Users/bgladman/OneDrive/DataProjects/YVW/PackageOutputs/WO_SLIDS.RDS")
+
+```
+
+
+```{r}
+pipe_cohort_analysis(outages=FALSE,
+              workorder_data=WO_SLIDS,
+              asset_data=CleanedData[[1]]) -> Asset_WO_List
+
+saveRDS(Asset_WO_List, "C:/Users/bgladman/OneDrive/DataProjects/YVW/PackageOutputs/Asset_WO_List.RDS")
+
+```
+
+
+```{r}
+# argF(
+# cohorts= Asset_WO_List[[1]],
+# asset_data=Asset_WO_List[[2]],
+# soil_data=importedData[[8]],
+# val_start="2017/07/01",
+# val_end="2018/07/01",
+# test_start="2017/07/01",
+# test_end="2018/07/01",
+# outages=FALSE,
+# maxN=10000,
+# minN=5,
+# Nfailcutoff=2,
+# rfe=FALSE,
+# forceUpdate=FALSE,
+# updateData=TRUE,  #PReProcess Data from NHPP
+# mainDir="C:/Users/bgladman/OneDrive/DataProjects/YVW/PackageOutputs"
+# ) -> Arg2018
+```
+
+
+```{r}
+Nfailcutoff=2
+rfe=FALSE
+val_start="2017/07/01"
+val_end="2018/07/01"
+test_start="2017/07/01"
+test_end="2018/07/01"
+mainDir="C:/Users/bgladman/OneDrive/DataProjects/YVW/PackageOutputs"
+subDir <- as.character(lubridate::year(val_end))
+path4 <- file.path(mainDir, subDir, paste0("Table1NHPP_cohorts_", subDir, ".RDS"))
+path1 <- file.path(mainDir, paste0("NHPPInputWO_Cohort_", subDir, ".RDS"))
+path2 <- file.path(mainDir, paste0("NHPPInputAssetCohort_", subDir, ".RDS"))
+modelSavePath <- paste0(mainDir, "/GBMModel_", Sys.Date(), "_ValEnd_", subDir, "_NFailCutoff_", Nfailcutoff, "_useRFE_", rfe)
+NHPPDir <- file.path(mainDir, "NHPP")
+
+savePaths<-list(path4=path4,
+                path1=path1,
+                path2=path2,
+                modelSavePath=modelSavePath,
+                NHPPDir=NHPPDir,
+                mainDir=mainDir)
+
+
+SOBmodelTrain(workorder_data= Asset_WO_List[[1]],
+              asset_data=Asset_WO_List[[2]],
+              soil_data=importedData[[8]],
+              SOB_data=importedData[[10]],
+              val_start="2017/07/01",
+              val_end="2018/07/01",
+              test_start="2017/07/01",
+              test_end="2018/07/01",
+              outages=FALSE,
+              maxN=10000,
+              minN=5,
+              Nfailcutoff=2,
+              forceUpdate=FALSE,
+              updateData=TRUE,  #PReProcess Data from NHPP
+              savePaths=savePaths)->out
+```
+

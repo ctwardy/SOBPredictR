@@ -22,4 +22,24 @@ Imports:
     magrittr,
     MARSS,
     data.table,
-    tidyr
+    tidyr,
+    missRanger,
+    spatstat.utils,
+    proj4,
+    h2o,
+    mice,
+    seqHMM,
+    rlang,
+    TraMineR,
+    markovchain,
+    HMM,
+    dirichletprocess,
+    ggmap,
+    DMwR,
+    cluster,
+    rcompanion,
+    knitr,
+    pROC
+VignetteBuilder: knitr
+Suggests: 
+    rmarkdown

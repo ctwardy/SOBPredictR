@@ -117,7 +117,7 @@ getBOM <- function(update, ClimatePath) {
 #' @export
 #'
 #' @examples \dontrun {get.soil.data(lat=37.8, lon1=-144)}
-get.soil.data <- function(lat1, lon1) {
+get.soil.data <- function(lat1, lon1, soil_data) {
 
   # Get unique soil data by long and lat
   unique(soil_data$x[which(abs(soil_data$x - lon1) ==
@@ -147,7 +147,7 @@ get.soil.data <- function(lat1, lon1) {
 #' @export
 #'
 #' @examples \dontrun {import_data(AssetPath="~Data/assetData.csv")}
-import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath, rainfall, minTemp, maxTemp, soilData, GISdata, ClimatePath, SOBAsset, SOBHistoric) {
+import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath, rainfall, minTemp, maxTemp, soilData, GISdata, ClimatePath, SOBSLID) {
 
   # Read #Keep this for Total Asset Statistics
   data.table::fread(AssetPath, header = TRUE, sep = ",", fill = TRUE) -> asset_data
@@ -262,14 +262,7 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
     #Read in SOB data
 
     # read in table of Asset Number, SLID and SOBIDs
-    data.table::fread(SOBAsset, header = TRUE, sep = ",", fill = TRUE) -> SOBAsset
-    data.table::fread(SOBHistoric, header = TRUE, sep = ",", fill = TRUE) -> SOBAsset2020
-
-    colnames(SOBAsset2020)[1] <- "Asset.Number"
-    colnames(SOBAsset2020)[2] <- "Shutoff.Block"
-    as.numeric(SOBAsset2020$Asset.Number) -> SOBAsset2020$Asset.Number
-    as.numeric(SOBAsset2020$Shutoff.Block) -> SOBAsset2020$Shutoff.Block
-
+    data.table::fread(SOBSLID, header = TRUE, sep = ",", fill = TRUE) -> SOBAsset
 
   # save as list
   data.frame.list <- list(
@@ -282,8 +275,7 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
     climate_data,
     soil_table,
     static_pressure_reduced,
-    SOBAsset,
-    SOBAsset2020
+    SOBAsset
 
   )
 

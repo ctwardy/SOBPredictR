@@ -19,7 +19,6 @@ coalesce2 <- function(...) {
   )
 }
 
-
 #' Data Wrangle
 #' This is a custom function which creates two cleaned data frames
 #' 1) asset data and 2) a combined work order and asset data
@@ -35,7 +34,7 @@ data_wrangle <- function(imported_data) {
   imported_data[[1]] -> work_orders_pre2015
   imported_data[[2]] -> work_orders
   imported_data[[3]] -> asset_data
-
+  imported_data[[9]] -> static_pressure
 
   # clean and process asset data
   coalesce2(asset_data$Pipe.Material, asset_data$Pipe.Material.1) ->
@@ -53,6 +52,9 @@ data_wrangle <- function(imported_data) {
   asset_data$Shutoff.Block.1 <- NULL
 
   colnames(asset_data)[1] <- "Asset.Number"
+
+  merge(asset_data, static_pressure[, c(2, 8)], by.x = "Asset.Number", by.y = "ASSETID", all.x = TRUE) -> asset_data
+
 
   # clean and process work order data
   # remove columns where all entries are NA

@@ -180,7 +180,7 @@ calcrepeat <- function(SOBs, DF, listofYears) {
 #' @export
 #'
 #' @examples
-CalcNSLIDS <- function(imported_data, df) {
+calcNSLIDS <- function(imported_data, df) {
   list(
     c("1996/04/01", "1997/03/31"), c("1997/04/01", "1998/03/31"), c("1998/04/01", "1999/03/31"), c("1999/04/01", "2000/03/31"),
     c("2000/04/01", "2001/03/31"), c("2001/04/01", "2002/03/31"), c("2002/04/01", "2003/03/31"), c("2003/04/01", "2004/03/31"),
@@ -231,17 +231,14 @@ CalcNSLIDS <- function(imported_data, df) {
     merged_DF_NSlids %>%
       dplyr::filter(Number.of.Work.Order.Water.Outages>0) %>%
       dplyr::arrange(Shutoff.Block, Reported.Date, dplyr::desc(NSLIDS_1), dplyr::desc(NSLIDS_2), dplyr::desc(NSLIDS_3), dplyr::desc(NSLIDS_4), dplyr::desc(NSLIDS_5), dplyr::desc(NSLIDS_6), dplyr::desc(NSLIDS_7)) %>%
-      dplyr::group_by(Shutoff.Block) %>%
+     # dplyr::group_by(Shutoff.Block) %>%
       dplyr::mutate(time_since_SOB_outage = as.numeric(difftime(Reported.Date, dplyr::lag(Reported.Date), units = "days"))) -> merged_DF_NSlids_outage
-    merged_DF_NSlids_outage %>% dplyr::mutate(time_since_SOB_outage = replace(time_since_SOB_outage, time_since_SOB_outage < 0, NA)) %>%
-      dplyr::select(Work.Order.Number, time_since_SOB_outage) -> merged_DF_NSlids_outage
+    merged_DF_NSlids_outage %>% dplyr::mutate(time_since_SOB_outage = replace(time_since_SOB_outage, time_since_SOB_outage < 0, NA)) %>% dplyr::ungroup() %>%
+      dplyr::select(Work.Order.Number, time_since_SOB_outage) ->  merged_DF_NSlids_outage
 
-    merged_DF_NSlids_outage %>% dplyr::select(Work.Order.Number, time_since_SOB_outage) -> tmp
+    merged_DF_NSlids_outage %>% dplyr::select(Work.Order.Number, time_since_SOB_outage) -> tmp  #start here///this is adding SOB why???
 
-    dplyr::left_join(merged_DF_NSlids, tmp, by="Work.Order.Number") -> merged_DF_NSlids
-
-    paste0(merged_DF_NSlids$Pipe.Material, ", ", lubridate::year(lubridate::ymd(merged_DF_NSlids$Install.Date))) -> merged_DF_NSlids$I.D
-    as.factor(merged_DF_NSlids$I.D) -> merged_DF_NSlids$I.D
+    dplyr::left_join(merged_DF_NSlids, tmp, by="Work.Order.Number") %>% as.data.frame() -> merged_DF_NSlids
 
     return(merged_DF_NSlids)
 
