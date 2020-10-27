@@ -17,7 +17,6 @@ argF(
   maxN,
   minN,
   Nfailcutoff,
-  rfe,
   updateData,
   forceUpdate,
   mainDir

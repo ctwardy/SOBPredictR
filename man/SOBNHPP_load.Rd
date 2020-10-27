@@ -16,7 +16,6 @@ SOBNHPP_load(
   minNinSOB,
   test_start,
   test_end,
-  subDir,
   cohortResults
 )
 }

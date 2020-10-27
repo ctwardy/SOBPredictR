@@ -7,6 +7,7 @@
 NHPP_fit(
   minNinSOB,
   asset_data,
+  soil_data,
   work_Order_Data,
   SOBNr,
   TI1,
