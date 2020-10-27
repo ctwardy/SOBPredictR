@@ -1,27 +1,4 @@
 
-#' Title
-#'
-#' @param cohorts
-#' @param asset_data
-#' @param imported_data
-#' @param val_start
-#' @param val_end
-#' @param test_start
-#' @param test_end
-#' @param outages
-#' @param maxN
-#' @param minN
-#' @param Nfailcutoff
-#' @param rfe
-#' @param updateData
-#' @param forceUpdate
-#' @param newDir
-#' @param mainDir
-#'
-#' @return
-#' @export
-#'
-#' @examples
 argF <- function(cohorts, predictors, asset_data, soil_data, val_start, val_end,
                  test_start, test_end, outages, maxN, minN, Nfailcutoff,
                  updateData, forceUpdate, mainDir) {
@@ -59,8 +36,36 @@ argF <- function(cohorts, predictors, asset_data, soil_data, val_start, val_end,
 }
 
 
+#' SOB Model Train
+#'
+#' Main Function to Train a new SOB model
+#'
+#' @param workorder_data dataframe
+#' @param asset_data dataframe
+#' @param soil_data dataframe
+#' @param SOB_data dataframe
+#' @param predictors character
+#' @param val_start date
+#' @param val_end date
+#' @param test_start date
+#' @param test_end date
+#' @param Nfailcutoff integer
+#' @param outages logical
+#' @param mainDir character
+#' @param savePaths character
+#'
+#' @return  returns a list of dataframe outputs from Cohort, SOB and SOB modelling
+
+#'
+#' @examples \dontrun{
+#' SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predictors, val_start,  val_end, test_start, test_end, Nfailcutoff,
+#' outages = FALSE, mainDir, savePaths)
+#' }
 SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predictors, val_start,  val_end, test_start, test_end, Nfailcutoff,
                           outages = FALSE, mainDir, savePaths) {
+
+  environment()->Env
+
   savePaths[[1]] -> path4
   savePaths[[2]] -> path1
   savePaths[[3]] -> path2
@@ -90,7 +95,8 @@ SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predic
   out3 <- list()
   out4 <- list()
 
-  for (i in c(startcohort:length(cohort_IDs))) {
+  #for (i in c(startcohort:length(cohort_IDs))) {
+    for (i in c(startcohort:length(cohort_IDs))) {
     print(paste0("running ", i))
     suppressWarnings(try(NHPP_fit_cohort_update(asset_data = asset_data, work_Order_Data = CohortInput, cohortNr = i, TI1 = Ndays, TI2 = Ndays + (valyears * 365), FNRlow = 10, FNRupp = 250, plot = FALSE, minpkh = 5, rollingwin = 90, inclsoilmoist = FALSE))) -> temp
 
@@ -135,8 +141,8 @@ SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predic
 
   ### replacement with tryCatch to hopefully fix this loop failing
 
-  for (i in startSOB:length(SB_IDs)) {
-    print(paste0("running SOB ID ", i, " of ", length(SB_IDs)))
+  for (i in startSOB:NSOBS) {
+    print(paste0("running SOB ID ", i, " of ", length(all_SOBs)))
 
     tryCatch(
       {
@@ -206,32 +212,31 @@ SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predic
 }
 
 
-#' Title
+#' SOB Model Predict
 #'
-#' @param workorder_data
-#' @param asset_data
-#' @param soil_data
-#' @param val_start
-#' @param predictors
-#' @param val_end
-#' @param test_start
-#' @param test_end
-#' @param outages
-#' @param maxN
-#' @param minN
-#' @param rfe
-#' @param mainDir
-#' @param updateData
-#' @param forceUpdate
-#' @param savePaths
+#' Uses New data to make SOB predictions
 #'
-#' @return
-#' @export
+#' @param workorder_data dataframe
+#' @param asset_data dataframe
+#' @param SOB_data dataframe
+#' @param soil_data dataframe
+#' @param val_start date
+#' @param val_end date
+#' @param test_start date
+#' @param test_end date
+#' @param outages logical
+#' @param predictors character
+#' @param ModelObj character
 #'
-#' @examples
+#' @return List of predictions and outputs from SOB modelling
+#'
+#' @examples \dontrun{
+#' SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val_start,  val_end, test_start, test_end,
+#' outages = FALSE, predictors, ModelObj)
+#' }
 SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val_start,  val_end, test_start, test_end,
                             outages = FALSE, predictors, ModelObj) {
-
+  environment()->Env
   maxN<-10000
   minN<-5
   ModelObj$ModelOutput[[8]] ->ModelPath
@@ -481,17 +486,3 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
   return(predDF)
 }
 
-
-#' Title
-#'
-#' @param Fn
-#' @param argF
-#'
-#' @return
-#' @export
-#'
-#' @examples
-RunSOBTrain <- function(Fn = SOBmodelTrain, argF) {
-  rlang::exec(Fn, !!!argF)->out
-  return(out)
-}

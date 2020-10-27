@@ -1,18 +1,20 @@
-#' Title
+#' NHPP_loadDatacohort
 #'
-#' @param work_order
-#' @param val_start
-#' @param val_end
-#' @param outages
-#' @param maxN
-#' @param minN
-#' @param test_start
-#' @param test_end
+#'Analagous function to SOB, applied to pipe Cohorts
+#' @param work_order datafrane
+#' @param val_start date
+#' @param val_end date
+#' @param outages logical
+#' @param maxN integer
+#' @param minN integer
+#' @param test_start date
+#' @param test_end date
 #'
-#' @return
-#' @export
+#' @return datafrane for NHPP Cohort Fitting
 #'
-#' @examples
+#' @examples \dontrun{
+#' NHPP_loadDatacohort <- function(work_order, val_start, val_end, outages, maxN, minN, test_start, test_end)
+#' }
 NHPP_loadDatacohort <- function(work_order, val_start, val_end, outages, maxN, minN, test_start, test_end) {
 
   # questions/additions,  change point analysis,
@@ -42,6 +44,7 @@ NHPP_loadDatacohort <- function(work_order, val_start, val_end, outages, maxN, m
 
   # Get Dates
   dplyr::first(work_order$Reported.Date) ->> start_date
+
   dplyr::last(work_order$Reported.Date) ->> last_date
 
   last_date2 <- as.POSIXlt(last_date)
@@ -51,9 +54,13 @@ NHPP_loadDatacohort <- function(work_order, val_start, val_end, outages, maxN, m
   as.Date(last_date2) ->> end_date
 
   as.numeric(as.Date(last_date) - as.Date(start_date)) ->> NdaysAll # entire data set
+
   as.numeric(as.Date(end_date) - as.Date(start_date)) ->> Ndays # less validation data
+
   seq.Date(as.Date(start_date), as.Date(end_date), by = "day") ->> All.Dates # excluding validation
+
   seq.Date(as.Date(val_start), as.Date(val_end), by = "day") ->> Val.Dates
+
   seq.Date(as.Date(test_start), as.Date(test_end), by = "day") ->> Test.Dates
 
   # Sys.Date()-1->end_date
@@ -67,24 +74,27 @@ NHPP_loadDatacohort <- function(work_order, val_start, val_end, outages, maxN, m
 }
 
 
-#' Title
+#' NHPP_fit_cohort
 #'
-#' @param asset_data
-#' @param work_Order_Data
-#' @param cohortNr
-#' @param TI1
-#' @param TI2
-#' @param FNRupp
-#' @param FNRlow
-#' @param plot
-#' @param minpkh
-#' @param rollingwin
-#' @param inclsoilmoist
+#' Analagous function to SOB NHPP fit.  Note this function is not called directly but via the modelTrain function
 #'
-#' @return
-#' @export
+#' @param asset_data dataframe
+#' @param work_Order_Data dataframe
+#' @param cohortNr integer
+#' @param TI1 integer
+#' @param TI2 integer
+#' @param FNRupp numeric
+#' @param FNRlow numeric
+#' @param plot logical
+#' @param minpkh numeric
+#' @param rollingwin integer
+#' @param inclsoilmoist logical
 #'
-#' @examples
+#' @return dataframe of NHPP fitted parameters for all pipe Cohorts.  This is required for the NHPP
+#'
+#' @examples \dontrun{
+#' NHPP_fit_cohort <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNRupp, FNRlow, plot, minpkh, rollingwin, inclsoilmoist)
+#' }
 NHPP_fit_cohort <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNRupp, FNRlow, plot, minpkh, rollingwin, inclsoilmoist) {
   result <- list(c())
   cohort_IDs[cohortNr] -> CohortID
@@ -221,7 +231,7 @@ NHPP_fit_cohort <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNR
   if (!is.null(peakdf)) {
     if (nrow(peakdf) > 1) {
       nrow(peakdf) - 1 -> h
-      kmeans(peakdf[, 2:4], h) -> clusterpeak
+      stats::kmeans(peakdf[, 2:4], h) -> clusterpeak
       clusterpeak$centers[, 1] -> peak_timespeakdf
     } else {
       peak_timespeakdf <- "NA"
@@ -262,12 +272,12 @@ NHPP_fit_cohort <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNR
   start_dateT <- 0 # lower bound of the observation window
   endT <- max(ct) # upper bound of the observation window
   sigma <- 150 # bandwidth for Gaussian kernel
-  densityEstimate <- density(ct, from = start_dateT, to = endT, n = 500, bw = sigma) # Gaussian kernel
+  densityEstimate <- stats::density(ct, from = start_dateT, to = endT, n = 500, bw = sigma) # Gaussian kernel
   timesD <- densityEstimate$x # extract times
   nRecurrences <- length(ct) # total number of recurrences
   intensityEstimate <- densityEstimate$y * nRecurrences # estimate of the intensity
   # implement edge correction
-  edgeCorrection <- pnorm(endT, timesD, sigma) - pnorm(start_dateT, timesD, sigma)
+  edgeCorrection <- stats::pnorm(endT, timesD, sigma) - stats::pnorm(start_dateT, timesD, sigma)
   # plot log(intensity) against time
 
   if (plot == TRUE) {
@@ -366,11 +376,11 @@ NHPP_fit_cohort <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNR
   ))[1:4]
   # 95% confidence intervals for beta and eta (normal-approximation)
   SEparms <- sqrt(diag(solve(-1 * ppPower$hessian)))
-  ppPower$parameters[1] * exp(c(1, -1) * qnorm(.05 / 2) * SEparms[1] / ppPower$parameters[1])[1] -> b_lower
-  ppPower$parameters[1] * exp(c(1, -1) * qnorm(.05 / 2) * SEparms[1] / ppPower$parameters[1])[2] -> b_upper
+  ppPower$parameters[1] * exp(c(1, -1) * stats::qnorm(.05 / 2) * SEparms[1] / ppPower$parameters[1])[1] -> b_lower
+  ppPower$parameters[1] * exp(c(1, -1) * stats::qnorm(.05 / 2) * SEparms[1] / ppPower$parameters[1])[2] -> b_upper
 
-  ppPower$parameters[2] * exp(c(1, -1) * qnorm(.05 / 2) * SEparms[2] / ppPower$parameters[2])[1] -> eta_lower
-  ppPower$parameters[2] * exp(c(1, -1) * qnorm(.05 / 2) * SEparms[2] / ppPower$parameters[2])[2] -> eta_upper
+  ppPower$parameters[2] * exp(c(1, -1) * stats::qnorm(.05 / 2) * SEparms[2] / ppPower$parameters[2])[1] -> eta_lower
+  ppPower$parameters[2] * exp(c(1, -1) * stats::qnorm(.05 / 2) * SEparms[2] / ppPower$parameters[2])[2] -> eta_upper
 
   ppPower$AIC -> power_AIC
   ppPower$loglik -> power_loglik
@@ -385,12 +395,12 @@ NHPP_fit_cohort <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNR
 
     # 95% confidence intervals for gamma0 and gamma1 (normal-approximation)
     SEparms <- sqrt(diag(solve(-1 * ppLoglin$hessian)))
-    ppLoglin$parameters[1] + c(1, -1) * qnorm(.05 / 2) * SEparms[1][1] -> gamma1_lower
-    ppLoglin$parameters[1] + c(1, -1) * qnorm(.05 / 2) * SEparms[1][2] -> gamma1_upper
+    ppLoglin$parameters[1] + c(1, -1) * stats::qnorm(.05 / 2) * SEparms[1][1] -> gamma1_lower
+    ppLoglin$parameters[1] + c(1, -1) * stats::qnorm(.05 / 2) * SEparms[1][2] -> gamma1_upper
 
 
-    ppLoglin$parameters[2] + c(1, -1) * qnorm(.05 / 2) * SEparms[2][1] -> gamma2_lower
-    ppLoglin$parameters[2] + c(1, -1) * qnorm(.05 / 2) * SEparms[2][2] -> gamma2_upper
+    ppLoglin$parameters[2] + c(1, -1) * stats::qnorm(.05 / 2) * SEparms[2][1] -> gamma2_lower
+    ppLoglin$parameters[2] + c(1, -1) * stats::qnorm(.05 / 2) * SEparms[2][2] -> gamma2_upper
 
     ppLoglin$AIC -> Loglin_AIC
     ppLoglin$loglik -> Loglin_loglik
@@ -401,7 +411,7 @@ NHPP_fit_cohort <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNR
   #                     intensity="homogeneous"))[1:4]
   ## 95% confidence intervals for gamma0 and gamma1 (normal-approximation)
   # SEparms <- sqrt(diag(solve(-1*ppHom$hessian)))
-  # ppHom$parameters[1] + c(1,-1)*qnorm(.05/2)*SEparms[1]
+  # ppHom$parameters[1] + c(1,-1)*stats::qnorm(.05/2)*SEparms[1]
 
   # plot the fitted NHPP models
   ct <- Fail_dates_period
@@ -410,14 +420,14 @@ NHPP_fit_cohort <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNR
   if (plot == TRUE) {
     grDevices::jpeg(paste0("Outputs/Plot1_", CohortID, ".jpg"))
     plot(ct, cf, type = "p", xlab = "Time", ylab = "Cumulative recurrences", xlim = c(0, max(ct)))
-    lines(timesseq, (timesseq / ppPower$parameters[2])^ppPower$parameters[1], col = "red", lty = 2)
-    # lines(timesseq, exp(ppLoglin$parameters[1])*(exp(ppLoglin$parameters[2]*timesseq)-1)/ppLoglin$parameters[2], col="blue", lty=2)
-    # lines(timesseq, ppHom$parameters[1]*timesseq, col="orange", lty=2)
-    legend("topleft",
+    graphics::lines(timesseq, (timesseq / ppPower$parameters[2])^ppPower$parameters[1], col = "red", lty = 2)
+    # graphics::lines(timesseq, exp(ppLoglin$parameters[1])*(exp(ppLoglin$parameters[2]*timesseq)-1)/ppLoglin$parameters[2], col="blue", lty=2)
+    # graphics::lines(timesseq, ppHom$parameters[1]*timesseq, col="orange", lty=2)
+    graphics::legend("topleft",
       pch = "-", col = c("blue"),
       legend = c("Power-NHPP"), bty = "n", y.intersp = 1.5
     )
-    dev.off()
+    grDevices::dev.off()
   }
   ## diagnostics
 
@@ -469,19 +479,19 @@ NHPP_fit_cohort <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNR
       type = "l", col = "red",
       xlab = "Cumulative recurrences", ylab = "HPP-time"
     )
-    lines(hppLoglin$eventIndex, hppLoglin$hppTimes, type = "l", col = "blue")
+    graphics::lines(hppLoglin$eventIndex, hppLoglin$hppTimes, type = "l", col = "blue")
     graphics::abline(a = 0, b = 1, col = "gray", lty = 2) # line y=x
-    legend("topleft",
+    graphics::legend("topleft",
       pch = "-", col = c("red", "blue"),
       legend = c("Power-NHPP", "Loglinear-NHPP"), bty = "n", y.intersp = 1.5
     )
 
-    dev.off()
+    grDevices::dev.off()
   }
 
   # For any NHPP or HPP, the interrecurrence times should be independent.
   if (plot == TRUE) {
-    acf(diff(hppPower$hppTimes), main = "Interrecurrence times HPP") # Power-NHPP
+    stats::acf(diff(hppPower$hppTimes), main = "Interrecurrence times HPP") # Power-NHPP
     # acf(diff(hppLoglin$hppTimes), main="Interrecurrence times HPP") #Loglinear-NHPP
   }
 
@@ -498,19 +508,19 @@ NHPP_fit_cohort <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNR
       )
     })
     # 95% confidence intervals for cumulative number of recurrences
-    plci <- unlist(SEs[1, ]) * exp((qnorm(.025) * unlist(SEs[2, ])) / unlist(SEs[1, ]))
-    puci <- unlist(SEs[1, ]) * exp((qnorm(.975) * unlist(SEs[2, ])) / unlist(SEs[1, ]))
+    plci <- unlist(SEs[1, ]) * exp((stats::qnorm(.025) * unlist(SEs[2, ])) / unlist(SEs[1, ]))
+    puci <- unlist(SEs[1, ]) * exp((stats::qnorm(.975) * unlist(SEs[2, ])) / unlist(SEs[1, ]))
 
     # plot fit
     plot(ct, cf,
       type = "p", xlab = "Time",
       ylab = "Cumulative recurrences", main = "Power-NHPP"
     )
-    lines(timesseq, (timesseq / ppPower$parameters[2])^ppPower$parameters[1],
+    graphics::lines(timesseq, (timesseq / ppPower$parameters[2])^ppPower$parameters[1],
       col = "red", lty = 2
     )
-    lines(x = ts, y = plci, col = "blue", lty = 2)
-    lines(x = ts, y = puci, col = "blue", lty = 2)
+    graphics::lines(x = ts, y = plci, col = "blue", lty = 2)
+    graphics::lines(x = ts, y = puci, col = "blue", lty = 2)
 
     # plot the fitted loglinear-NHPP model including confidence intervals
     # ts <- seq(1, max(ct), length.out=100)
@@ -520,16 +530,16 @@ NHPP_fit_cohort <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNR
     #                                                 constants=c(ts=ts[i])))
 
     # 95% confidence intervals for cumulative number of recurrences
-    # llci <- unlist(SEs[1,])*exp((qnorm(.025)*unlist(SEs[2,]))/unlist(SEs[1,]))
-    # luci <- unlist(SEs[1,])*exp((qnorm(.975)*unlist(SEs[2,]))/unlist(SEs[1,]))
+    # llci <- unlist(SEs[1,])*exp((stats::qnorm(.025)*unlist(SEs[2,]))/unlist(SEs[1,]))
+    # luci <- unlist(SEs[1,])*exp((stats::qnorm(.975)*unlist(SEs[2,]))/unlist(SEs[1,]))
 
     # plot fit
     # plot(ct, cf, type="p", xlab="Time",
     #    ylab="Cumulative recurrences", main="Loglinear-NHPP")
-    #  lines(timesseq, exp(ppLoglin$parameters[1])*(exp(ppLoglin$parameters[2]*timesseq)-1)/ppLoglin$parameters[2],
+    #  graphics::lines(timesseq, exp(ppLoglin$parameters[1])*(exp(ppLoglin$parameters[2]*timesseq)-1)/ppLoglin$parameters[2],
     #       col="red", lty=2)
-    # lines(x=ts, y=llci, col="blue", lty=2)
-    # lines(x=ts, y=luci, col="blue", lty=2)
+    # graphics::lines(x=ts, y=llci, col="blue", lty=2)
+    # graphics::lines(x=ts, y=luci, col="blue", lty=2)
   }
 
   # compute future number of recurrences (including 95% confidence interval)
@@ -543,14 +553,14 @@ NHPP_fit_cohort <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNR
     vcov. = solve(-1 * ppPower$hessian), constants = c(ta = ta, tb = tb)
   )
   fnrp$Estimate # point estimate
-  fnrp$Estimate * exp(c(1, -1) * ((qnorm(.05 / 2) * fnrp$SE) / fnrp$Estimate)) # confidence interval
+  fnrp$Estimate * exp(c(1, -1) * ((stats::qnorm(.05 / 2) * fnrp$SE) / fnrp$Estimate)) # confidence interval
 
   # loglinear-NHPP
   # fnrl <- car::deltaMethod(ppLoglin$parameters,
   #                   g="(exp(gamma0)/gamma1)*(exp(gamma1*tb)-exp(gamma1*ta))",
   #                  vcov.=solve(-1*ppLoglin$hessian), constants=c(ta=ta, tb=tb))
   # fnrl$Estimate #point estimate
-  # fnrl$Estimate*exp(c(1,-1)*((qnorm(.05/2)*fnrl$SE)/fnrl$Estimate)) #confidence interval
+  # fnrl$Estimate*exp(c(1,-1)*((stats::qnorm(.05/2)*fnrl$SE)/fnrl$Estimate)) #confidence interval
 
   # compute likelihood based confidence interval for the future number
   # of recurrences (=FNR) in the interval [a,b]
@@ -647,7 +657,7 @@ NHPP_fit_cohort <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNR
       # include interval bounds
       if (!is.na(lowerci)) graphics::abline(v = lowerci, col = "darkgreen", lty = 2)
       if (!is.na(upperci)) graphics::abline(v = upperci, col = "darkgreen", lty = 2)
-      dev.off()
+      grDevices::dev.off()
     }
 
     # return bounds
@@ -685,7 +695,7 @@ NHPP_fit_cohort <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNR
   # labs(title = "Cumulative Failures", x = "Time in Days", y = "Cumulative recurrences", color = "Failure Cause\n") +
   # theme_bw()
   # print(p)
-  # dev.off()}
+  # grDevices::dev.off()}
   # }
 
   InclogLin <- FALSE
@@ -735,24 +745,28 @@ NHPP_fit_cohort <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNR
   return(result)
 }
 
-#' Title
+#' NHPP_fit_cohort_update
 #'
-#' @param asset_data
-#' @param work_Order_Data
-#' @param cohortNr
-#' @param TI1
-#' @param TI2
-#' @param FNRupp
-#' @param FNRlow
-#' @param plot
-#' @param minpkh
-#' @param rollingwin
-#' @param inclsoilmoist
+#' Similar function as NHPP fit cohort.  Update used when for making a year ahead prediction.  Not called directly
 #'
-#' @return
+#' @param asset_data dataframe
+#' @param work_Order_Data dataframe
+#' @param cohortNr integer
+#' @param TI1 integer
+#' @param TI2 integer
+#' @param FNRupp integer
+#' @param FNRlow integer
+#' @param plot logical
+#' @param minpkh integer
+#' @param rollingwin integer
+#' @param inclsoilmoist logical
+#'
+#' @return dataframe of fitted parameters for pipe cohorts
 #' @export
 #'
-#' @examples
+#' @examples \dontrun{
+#' NHPP_fit_cohort_update <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNRupp, FNRlow, plot, minpkh, rollingwin, inclsoilmoist)
+#' }
 NHPP_fit_cohort_update <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNRupp, FNRlow, plot, minpkh, rollingwin, inclsoilmoist) {
   result <- list(c())
   cohort_IDs[cohortNr] -> CohortID
@@ -890,7 +904,7 @@ NHPP_fit_cohort_update <- function(asset_data, work_Order_Data, cohortNr, TI1, T
   if (!is.null(peakdf)) {
     if (nrow(peakdf) > 1) {
       nrow(peakdf) - 1 -> h
-      kmeans(peakdf[, 2:4], h) -> clusterpeak
+      stats::kmeans(peakdf[, 2:4], h) -> clusterpeak
       clusterpeak$centers[, 1] -> peak_timespeakdf
     } else {
       peak_timespeakdf <- "NA"
@@ -931,7 +945,7 @@ NHPP_fit_cohort_update <- function(asset_data, work_Order_Data, cohortNr, TI1, T
   start_dateT <- 0 # lower bound of the observation window
   endT <- max(ct) # upper bound of the observation window
   sigma <- 150 # bandwidth for Gaussian kernel
-  densityEstimate <- density(ct, from = start_dateT, to = endT, n = 500, bw = sigma) # Gaussian kernel
+  densityEstimate <- stats::density(ct, from = start_dateT, to = endT, n = 500, bw = sigma) # Gaussian kernel
   timesD <- densityEstimate$x # extract times
   nRecurrences <- length(ct) # total number of recurrences
   intensityEstimate <- densityEstimate$y * nRecurrences # estimate of the intensity
@@ -1035,11 +1049,11 @@ NHPP_fit_cohort_update <- function(asset_data, work_Order_Data, cohortNr, TI1, T
   ))[1:4]
   # 95% confidence intervals for beta and eta (normal-approximation)
   SEparms <- sqrt(diag(solve(-1 * ppPower$hessian)))
-  ppPower$parameters[1] * exp(c(1, -1) * qnorm(.05 / 2) * SEparms[1] / ppPower$parameters[1])[1] -> b_lower
-  ppPower$parameters[1] * exp(c(1, -1) * qnorm(.05 / 2) * SEparms[1] / ppPower$parameters[1])[2] -> b_upper
+  ppPower$parameters[1] * exp(c(1, -1) * stats::qnorm(.05 / 2) * SEparms[1] / ppPower$parameters[1])[1] -> b_lower
+  ppPower$parameters[1] * exp(c(1, -1) * stats::qnorm(.05 / 2) * SEparms[1] / ppPower$parameters[1])[2] -> b_upper
 
-  ppPower$parameters[2] * exp(c(1, -1) * qnorm(.05 / 2) * SEparms[2] / ppPower$parameters[2])[1] -> eta_lower
-  ppPower$parameters[2] * exp(c(1, -1) * qnorm(.05 / 2) * SEparms[2] / ppPower$parameters[2])[2] -> eta_upper
+  ppPower$parameters[2] * exp(c(1, -1) * stats::qnorm(.05 / 2) * SEparms[2] / ppPower$parameters[2])[1] -> eta_lower
+  ppPower$parameters[2] * exp(c(1, -1) * stats::qnorm(.05 / 2) * SEparms[2] / ppPower$parameters[2])[2] -> eta_upper
 
   ppPower$AIC -> power_AIC
   ppPower$loglik -> power_loglik
@@ -1054,12 +1068,12 @@ NHPP_fit_cohort_update <- function(asset_data, work_Order_Data, cohortNr, TI1, T
 
     # 95% confidence intervals for gamma0 and gamma1 (normal-approximation)
     SEparms <- sqrt(diag(solve(-1 * ppLoglin$hessian)))
-    ppLoglin$parameters[1] + c(1, -1) * qnorm(.05 / 2) * SEparms[1][1] -> gamma1_lower
-    ppLoglin$parameters[1] + c(1, -1) * qnorm(.05 / 2) * SEparms[1][2] -> gamma1_upper
+    ppLoglin$parameters[1] + c(1, -1) * stats::qnorm(.05 / 2) * SEparms[1][1] -> gamma1_lower
+    ppLoglin$parameters[1] + c(1, -1) * stats::qnorm(.05 / 2) * SEparms[1][2] -> gamma1_upper
 
 
-    ppLoglin$parameters[2] + c(1, -1) * qnorm(.05 / 2) * SEparms[2][1] -> gamma2_lower
-    ppLoglin$parameters[2] + c(1, -1) * qnorm(.05 / 2) * SEparms[2][2] -> gamma2_upper
+    ppLoglin$parameters[2] + c(1, -1) * stats::qnorm(.05 / 2) * SEparms[2][1] -> gamma2_lower
+    ppLoglin$parameters[2] + c(1, -1) * stats::qnorm(.05 / 2) * SEparms[2][2] -> gamma2_upper
 
     ppLoglin$AIC -> Loglin_AIC
     ppLoglin$loglik -> Loglin_loglik
@@ -1070,7 +1084,7 @@ NHPP_fit_cohort_update <- function(asset_data, work_Order_Data, cohortNr, TI1, T
   #                     intensity="homogeneous"))[1:4]
   ## 95% confidence intervals for gamma0 and gamma1 (normal-approximation)
   # SEparms <- sqrt(diag(solve(-1*ppHom$hessian)))
-  # ppHom$parameters[1] + c(1,-1)*qnorm(.05/2)*SEparms[1]
+  # ppHom$parameters[1] + c(1,-1)*stats::qnorm(.05/2)*SEparms[1]
 
   # plot the fitted NHPP models
   ct <- Fail_dates_period
@@ -1079,14 +1093,14 @@ NHPP_fit_cohort_update <- function(asset_data, work_Order_Data, cohortNr, TI1, T
   if (plot == TRUE) {
     grDevices::jpeg(paste0("Outputs/Plot1_", CohortID, ".jpg"))
     plot(ct, cf, type = "p", xlab = "Time", ylab = "Cumulative recurrences", xlim = c(0, max(ct)))
-    lines(timesseq, (timesseq / ppPower$parameters[2])^ppPower$parameters[1], col = "red", lty = 2)
-    # lines(timesseq, exp(ppLoglin$parameters[1])*(exp(ppLoglin$parameters[2]*timesseq)-1)/ppLoglin$parameters[2], col="blue", lty=2)
-    # lines(timesseq, ppHom$parameters[1]*timesseq, col="orange", lty=2)
-    legend("topleft",
+    graphics::lines(timesseq, (timesseq / ppPower$parameters[2])^ppPower$parameters[1], col = "red", lty = 2)
+    # graphics::lines(timesseq, exp(ppLoglin$parameters[1])*(exp(ppLoglin$parameters[2]*timesseq)-1)/ppLoglin$parameters[2], col="blue", lty=2)
+    # graphics::lines(timesseq, ppHom$parameters[1]*timesseq, col="orange", lty=2)
+    graphics::legend("topleft",
       pch = "-", col = c("blue"),
       legend = c("Power-NHPP"), bty = "n", y.intersp = 1.5
     )
-    dev.off()
+    grDevices::dev.off()
   }
   ## diagnostics
 
@@ -1138,19 +1152,19 @@ NHPP_fit_cohort_update <- function(asset_data, work_Order_Data, cohortNr, TI1, T
       type = "l", col = "red",
       xlab = "Cumulative recurrences", ylab = "HPP-time"
     )
-    lines(hppLoglin$eventIndex, hppLoglin$hppTimes, type = "l", col = "blue")
+    graphics::lines(hppLoglin$eventIndex, hppLoglin$hppTimes, type = "l", col = "blue")
     graphics::abline(a = 0, b = 1, col = "gray", lty = 2) # line y=x
-    legend("topleft",
+    graphics::legend("topleft",
       pch = "-", col = c("red", "blue"),
       legend = c("Power-NHPP", "Loglinear-NHPP"), bty = "n", y.intersp = 1.5
     )
 
-    dev.off()
+    grDevices::dev.off()
   }
 
   # For any NHPP or HPP, the interrecurrence times should be independent.
   if (plot == TRUE) {
-    acf(diff(hppPower$hppTimes), main = "Interrecurrence times HPP") # Power-NHPP
+    stats::acf(diff(hppPower$hppTimes), main = "Interrecurrence times HPP") # Power-NHPP
     # acf(diff(hppLoglin$hppTimes), main="Interrecurrence times HPP") #Loglinear-NHPP
   }
 
@@ -1167,19 +1181,19 @@ NHPP_fit_cohort_update <- function(asset_data, work_Order_Data, cohortNr, TI1, T
       )
     })
     # 95% confidence intervals for cumulative number of recurrences
-    plci <- unlist(SEs[1, ]) * exp((qnorm(.025) * unlist(SEs[2, ])) / unlist(SEs[1, ]))
-    puci <- unlist(SEs[1, ]) * exp((qnorm(.975) * unlist(SEs[2, ])) / unlist(SEs[1, ]))
+    plci <- unlist(SEs[1, ]) * exp((stats::qnorm(.025) * unlist(SEs[2, ])) / unlist(SEs[1, ]))
+    puci <- unlist(SEs[1, ]) * exp((stats::qnorm(.975) * unlist(SEs[2, ])) / unlist(SEs[1, ]))
 
     # plot fit
     plot(ct, cf,
       type = "p", xlab = "Time",
       ylab = "Cumulative recurrences", main = "Power-NHPP"
     )
-    lines(timesseq, (timesseq / ppPower$parameters[2])^ppPower$parameters[1],
+    graphics::lines(timesseq, (timesseq / ppPower$parameters[2])^ppPower$parameters[1],
       col = "red", lty = 2
     )
-    lines(x = ts, y = plci, col = "blue", lty = 2)
-    lines(x = ts, y = puci, col = "blue", lty = 2)
+    graphics::lines(x = ts, y = plci, col = "blue", lty = 2)
+    graphics::lines(x = ts, y = puci, col = "blue", lty = 2)
 
     # plot the fitted loglinear-NHPP model including confidence intervals
     # ts <- seq(1, max(ct), length.out=100)
@@ -1189,16 +1203,16 @@ NHPP_fit_cohort_update <- function(asset_data, work_Order_Data, cohortNr, TI1, T
     #                                                 constants=c(ts=ts[i])))
 
     # 95% confidence intervals for cumulative number of recurrences
-    # llci <- unlist(SEs[1,])*exp((qnorm(.025)*unlist(SEs[2,]))/unlist(SEs[1,]))
-    # luci <- unlist(SEs[1,])*exp((qnorm(.975)*unlist(SEs[2,]))/unlist(SEs[1,]))
+    # llci <- unlist(SEs[1,])*exp((stats::qnorm(.025)*unlist(SEs[2,]))/unlist(SEs[1,]))
+    # luci <- unlist(SEs[1,])*exp((stats::qnorm(.975)*unlist(SEs[2,]))/unlist(SEs[1,]))
 
     # plot fit
     # plot(ct, cf, type="p", xlab="Time",
     #    ylab="Cumulative recurrences", main="Loglinear-NHPP")
-    #  lines(timesseq, exp(ppLoglin$parameters[1])*(exp(ppLoglin$parameters[2]*timesseq)-1)/ppLoglin$parameters[2],
+    #  graphics::lines(timesseq, exp(ppLoglin$parameters[1])*(exp(ppLoglin$parameters[2]*timesseq)-1)/ppLoglin$parameters[2],
     #       col="red", lty=2)
-    # lines(x=ts, y=llci, col="blue", lty=2)
-    # lines(x=ts, y=luci, col="blue", lty=2)
+    # graphics::lines(x=ts, y=llci, col="blue", lty=2)
+    # graphics::lines(x=ts, y=luci, col="blue", lty=2)
   }
 
   # compute future number of recurrences (including 95% confidence interval)
@@ -1212,14 +1226,14 @@ NHPP_fit_cohort_update <- function(asset_data, work_Order_Data, cohortNr, TI1, T
     vcov. = solve(-1 * ppPower$hessian), constants = c(ta = ta, tb = tb)
   )
   fnrp$Estimate # point estimate
-  fnrp$Estimate * exp(c(1, -1) * ((qnorm(.05 / 2) * fnrp$SE) / fnrp$Estimate)) # confidence interval
+  fnrp$Estimate * exp(c(1, -1) * ((stats::qnorm(.05 / 2) * fnrp$SE) / fnrp$Estimate)) # confidence interval
 
   # loglinear-NHPP
   # fnrl <- car::deltaMethod(ppLoglin$parameters,
   #                   g="(exp(gamma0)/gamma1)*(exp(gamma1*tb)-exp(gamma1*ta))",
   #                  vcov.=solve(-1*ppLoglin$hessian), constants=c(ta=ta, tb=tb))
   # fnrl$Estimate #point estimate
-  # fnrl$Estimate*exp(c(1,-1)*((qnorm(.05/2)*fnrl$SE)/fnrl$Estimate)) #confidence interval
+  # fnrl$Estimate*exp(c(1,-1)*((stats::qnorm(.05/2)*fnrl$SE)/fnrl$Estimate)) #confidence interval
 
   # compute likelihood based confidence interval for the future number
   # of recurrences (=FNR) in the interval [a,b]
@@ -1316,7 +1330,7 @@ NHPP_fit_cohort_update <- function(asset_data, work_Order_Data, cohortNr, TI1, T
       # include interval bounds
       if (!is.na(lowerci)) graphics::abline(v = lowerci, col = "darkgreen", lty = 2)
       if (!is.na(upperci)) graphics::abline(v = upperci, col = "darkgreen", lty = 2)
-      dev.off()
+      grDevices::dev.off()
     }
 
     # return bounds

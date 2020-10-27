@@ -5,12 +5,14 @@
 # processed, returns climate rds with all climate data new and existing, if
 # update is needed else returns current processed climate data.
 #'
-#' @param update
+#' @param update logical
+#' @param ClimatePath character
 #'
 #' @return  date frame of climate data
-#' @export
 #'
-#' @examples \dontrun {getBOM(update=FALSE, ClimatePath="PathtoClimateData")}
+#' @examples \dontrun{
+#' getBOM(update=FALSE, ClimatePath="PathtoClimateData")
+#' }
 getBOM <- function(update, ClimatePath) {
 
   # pulls in and reformats data to be updated
@@ -19,19 +21,19 @@ getBOM <- function(update, ClimatePath) {
     # read in current data
     utils::read.csv(ClimatePath, header = TRUE) -> climate_data_existing
     climate_data_existing$Date <- as.Date(climate_data_existing$Date)
-    start <- as.Date(last(climate_data_existing$Date))
+    start <- as.Date(dplyr::last(climate_data_existing$Date))
     start2 <- as.Date("1995/01/01")
     c(start, start2) -> temp
     temp[which.max(temp)] -> start
 
     # get data from correct stations
-    sweep_for_stations(c(-37.80, 145.15)) -> stations
+    bomrang::sweep_for_stations(c(-37.80, 145.15)) -> stations
     utils::head(stations, 10)
     stations$site[9] -> stationID
-    get_historical(stationID, type = c("min")) -> min_temp
-    get_historical(stationID, type = c("max")) -> max_temp
-    get_historical(stationID, type = c("rain")) -> rain
-    get_historical(stationID, type = c("solar")) -> solar
+    bomrang::get_historical(stationID, type = c("min")) -> min_temp
+    bomrang::get_historical(stationID, type = c("max")) -> max_temp
+    bomrang::get_historical(stationID, type = c("rain")) -> rain
+    bomrang::get_historical(stationID, type = c("solar")) -> solar
 
     # formatting dates
     min_temp$Date <- as.Date(
@@ -108,15 +110,19 @@ getBOM <- function(update, ClimatePath) {
 
 
 #' GetSoil Data
-#'#this function gets soil data i.e. clay, sand ect... by longitude and latitude
-# and returns as a table
-#' @param lat1  latitude numeric
-#' @param lon1  longitude numeric
+#'
+#' This function gets soil data i.e. clay, sand ect... by longitude and latitude
+#  and returns as a table
+
+#' @param lon1 numeric
+#' @param soil_data dataframe
+#' @param lat1 numeric
 #'
 #' @return
-#' @export
 #'
-#' @examples \dontrun {get.soil.data(lat=37.8, lon1=-144)}
+#' @examples \dontrun{
+#' get.soil.data(lat=37.8, lon1=-144)
+#' }
 get.soil.data <- function(lat1, lon1, soil_data) {
 
   # Get unique soil data by long and lat
@@ -131,8 +137,10 @@ get.soil.data <- function(lat1, lon1, soil_data) {
 
 
 #' Import
+#'
 #'This function is to import all requird data sources for
 # ML and modeling purposes, the output is list of 9 data tables used throughout the project
+
 #' @param AssetPath  Path to Asset Data csv
 #' @param WorkOrderPath Path to Work Order Maximo Data csv
 #' @param HansenPath Path to Hansen Work Order Data csv
@@ -142,11 +150,13 @@ get.soil.data <- function(lat1, lon1, soil_data) {
 #' @param maxTemp Path to max temp data RDS
 #' @param soilData Path to Asset Data tif files
 #' @param GISdata Path to GIS Data csv
+#' @param ClimatePath character
+#' @param SOBSLID dataframe
 #'
-#' @return  list
-#' @export
-#'
-#' @examples \dontrun {import_data(AssetPath="~Data/assetData.csv")}
+#' @return  list of dataframes
+#' @examples \dontrun{
+#' import_data(AssetPath="~Data/assetData.csv")
+#' }
 import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath, rainfall, minTemp, maxTemp, soilData, GISdata, ClimatePath, SOBSLID) {
 
   # Read #Keep this for Total Asset Statistics

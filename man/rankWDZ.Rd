@@ -2,16 +2,25 @@
 % Please edit documentation in R/pipemodelMain.R
 \name{rankWDZ}
 \alias{rankWDZ}
-\title{Title}
+\title{rankWDZ}
 \usage{
-rankWDZ(WDZPath, SOBResult)
+rankWDZ(WDZPath, SOBResult, N)
 }
 \arguments{
-\item{SOBResult}{}
+\item{WDZPath}{character}
+
+\item{SOBResult}{dataframe}
+
+\item{N}{integer}
 }
 \value{
-
+a list of the top N Zones
 }
 \description{
-Title
+ranks WDZ in order of decreasing proportion of SOBs
+}
+\examples{
+\dontrun{
+rankWDZ <- function(WDZPath, SOBResult, N=10)
+}
 }

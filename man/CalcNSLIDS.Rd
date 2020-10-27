@@ -2,16 +2,25 @@
 % Please edit documentation in R/calcRepeats.R
 \name{calcNSLIDS}
 \alias{calcNSLIDS}
-\title{Title}
+\title{Calculate Number of SLIDS}
 \usage{
 calcNSLIDS(imported_data, df)
 }
 \arguments{
-\item{data.f}{}
+\item{imported_data}{list}
+
+\item{df}{dataframe}
 }
 \value{
-
+if imported_data is a list of imported data frames
+and df is a dataframe of cleaned workorders, function returns a dataframe
+of workorders plus number of SLIDS experiencing 1,2...7 interruptions
 }
 \description{
-Title
+Function calculates the number of SLIDS experiencing repeat interruptions
+}
+\examples{
+\dontrun{
+calcNSLIDS(imported_data=Imported, df=DF)
+}
 }

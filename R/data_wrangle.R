@@ -1,11 +1,14 @@
 #' Modified Coalesce
+#'
 #' Coalesce two dataframes
-#' @param ...
 #'
-#' @return dataframe
-#' @export
+#' @param ... vector
 #'
-#' @examples \dontrun {coalesce2(x, y)}
+#' @return vector
+#'
+#' @examples \dontrun{
+#' coalesce2(x, y)
+#' }
 coalesce2 <- function(...) {
   Reduce(
     function(x, y) {
@@ -20,16 +23,18 @@ coalesce2 <- function(...) {
 }
 
 #' Data Wrangle
+#'
 #' This is a custom function which creates two cleaned data frames
-#' 1) asset data and 2) a combined work order and asset data
+#' 1: asset data and 2: a combined work order and asset data
 #' The cleaning steps ensures there are no duplicates and that the data is consistent
 #'
-#' @param imported_data
+#' @param imported_data list
 #'
-#' @return list of cleaned data frames;  asset data and work order data
-#' @export
+#' @return list of 2 cleaned data frames:  asset data and work order data
 #'
-#' @examples  \dontrun {data_wrangle(imported_data)}
+#' @examples \dontrun{
+#' data_wrangle(imported_data)
+#' }
 data_wrangle <- function(imported_data) {
   imported_data[[1]] -> work_orders_pre2015
   imported_data[[2]] -> work_orders

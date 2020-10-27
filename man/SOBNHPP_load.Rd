@@ -2,7 +2,7 @@
 % Please edit documentation in R/NHPPSOB.R
 \name{SOBNHPP_load}
 \alias{SOBNHPP_load}
-\title{Title}
+\title{SOBNHPP_load}
 \usage{
 SOBNHPP_load(
   mainOnly,
@@ -20,11 +20,38 @@ SOBNHPP_load(
 )
 }
 \arguments{
-\item{cohortResults}{}
+\item{mainOnly}{logical}
+
+\item{val_start}{date}
+
+\item{val_end}{date}
+
+\item{outages}{logical}
+
+\item{maxNinSOB}{integer}
+
+\item{work_Order_Data}{dataframe}
+
+\item{asset_data}{datafrane}
+
+\item{SOB_data}{datafrane}
+
+\item{minNinSOB}{integer}
+
+\item{test_start}{date}
+
+\item{test_end}{date}
+
+\item{cohortResults}{datafrane}
 }
 \value{
-
+dataframe for inputting to NHPP fit
 }
 \description{
-Title
+Loads the data in preparation for the NHPP fitting step
+}
+\examples{
+\dontrun{
+SOBNHPP_load <- function(mainOnly, val_start, val_end, outages, maxNinSOB, work_Order_Data, asset_data, SOB_data, minNinSOB, test_start, test_end, cohortResults)
+}
 }

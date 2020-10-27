@@ -14,7 +14,7 @@ ZoneAnalysis <- function(ZoneResult, WOD, ZoneNr, PrCutOff, maxLength) {
     ggplot2::geom_line() +
     ggplot2::geom_point() -> P1
 
-  mean(tail(yeartotals$Number, 6), na.rm = TRUE) -> AvBurstsinZone
+  mean(utils::tail(yeartotals$Number, 6), na.rm = TRUE) -> AvBurstsinZone
 
   WOD %>%
     dplyr::group_by(lubridate::year(Reported.Date)) %>%
@@ -25,7 +25,7 @@ ZoneAnalysis <- function(ZoneResult, WOD, ZoneNr, PrCutOff, maxLength) {
   ggplot2::ggplot(data = G2, ggplot2::aes(x = Year)) +
     ggplot2::geom_line(ggplot2::aes(y = NumberNonG2events, colour = "Near G2")) +
     ggplot2::geom_line(ggplot2::aes(y = NumberG2events, colour = "G2")) -> P2
-  mean(tail(G2$NumberG2events, 7), na.rm = TRUE) -> AvG2eventsinZone
+  mean(utils::tail(G2$NumberG2events, 7), na.rm = TRUE) -> AvG2eventsinZone
 
   WOD %>%
     dplyr::group_by(lubridate::year(Reported.Date)) %>%
@@ -75,7 +75,7 @@ ZoneAnalysis <- function(ZoneResult, WOD, ZoneNr, PrCutOff, maxLength) {
 
   SOBTable %>%
     dplyr::mutate(NpipeIntensity = Intensity * Npipes) %>%
-    dplyr::arrange(desc(NpipeIntensity)) -> SOBTable
+    dplyr::arrange(dplyr::desc(NpipeIntensity)) -> SOBTable
 
   SOBTable %>%
     dplyr::filter(!Npipes < 1) -> SOBTable
@@ -98,14 +98,20 @@ ZoneAnalysis <- function(ZoneResult, WOD, ZoneNr, PrCutOff, maxLength) {
 }
 
 
-#' Title
+#' Zone Results
 #'
-#' @param PipeResults
+#' Pipe Modelling for Zones
 #'
-#' @return
-#' @export
+#' @param PipeResults dataframe
+#' @param PrCutOff numeric
+#' @param workorder_data dataframe
+#' @param maxLength numeric
 #'
-#' @examples
+#' @return list of dataframes
+#'
+#' @examples \dontrun{
+#' ZoneResults<-function(PipeResults, PrCutOff, workorder_data, maxLength)
+#' }
 ZoneResults<-function(PipeResults, PrCutOff, workorder_data, maxLength){
 
   unique(PipeResults$DZ) -> Zones
@@ -161,15 +167,20 @@ ZoneResults<-function(PipeResults, PrCutOff, workorder_data, maxLength){
 }
 
 
-#' Title
+#' rankWDZ
 #'
-#' @param WDZPath
-#' @param SOBResult
+#' ranks WDZ in order of decreasing proportion of SOBs
 #'
-#' @return
+#' @param WDZPath character
+#' @param SOBResult dataframe
+#' @param N integer
+#'
+#' @return a list of the top N Zones
 #' @export
 #'
-#' @examples
+#' @examples \dontrun{
+#' rankWDZ <- function(WDZPath, SOBResult, N=10)
+#' }
 rankWDZ <- function(WDZPath, SOBResult, N) {
   utils::read.csv(WDZPath) -> WDZ
 
@@ -202,7 +213,7 @@ rankWDZ <- function(WDZPath, SOBResult, N) {
   SOB_WDZ$Water_Distribution_Zone[SOB_WDZ$Water_Distribution_Zone == "<NA>"] <- NA
   SOB_WDZ$Status[SOB_WDZ$Status == "DECOMMISSIONED"] <- NA
 
-  SOB_WDZ[complete.cases(SOB_WDZ), ] -> SOB_WDZ
+  SOB_WDZ[stats::complete.cases(SOB_WDZ), ] -> SOB_WDZ
 
   SOB_WDZ %>%
     dplyr::filter(Prediction == newPosClassLabel) %>%
@@ -269,7 +280,7 @@ pipeModel <- function(workorder_data, asset_data, cohort_data, SOBData, WDZAsset
   asset_data$Distribution.Zone.Name <- gsub(" No ", "Res ", asset_data$Distribution.Zone.Name)
 
 
-  read.csv(WDZAssetPath) -> WDZID
+  utils::read.csv(WDZAssetPath) -> WDZID
    # # #Fix Distribution Zone Name Errors in Asset table
   WDZID$Water.Distribution.Zone <- gsub('P.R.', 'PR', WDZID$Water.Distribution.Zone)
   WDZID$Water.Distribution.Zone <- gsub('P.R', 'PR', WDZID$Water.Distribution.Zone)
@@ -374,7 +385,7 @@ pipeModel <- function(workorder_data, asset_data, cohort_data, SOBData, WDZAsset
 
   as.numeric(table_results$Median_Intensity) -> table_results$Median_Intensity
 
-  table_results %>% dplyr::arrange(desc(Median_Intensity)) -> table_results
+  table_results %>% dplyr::arrange(dplyr::desc(Median_Intensity)) -> table_results
 
   # check for duplicated,  remove duplicates need to work out why they are appearing in the results, mostly NA
 
@@ -442,30 +453,29 @@ pipeModel <- function(workorder_data, asset_data, cohort_data, SOBData, WDZAsset
 }
 
 
-
-
-#
-#' Title
-#' Note this determines the value of alpha or intensity of failure, lambda(t) for pipes.  It assumes that alpha is constant with time and is updated based on new evidence, i.e  N and T
+#' PipeIntensity
+#'
+#'This determines the value of alpha or intensity of failure, lambda(t) for pipes.  It assumes that alpha is constant with time and is updated based on new evidence, i.e  N and T
 # here T is fixed as the years of observation, and N is number of failures for Pipe in interval T.
 # Need to look at Support and modify this for a non homogeneous process, i.e alpha is replaced by a and b,  or eta and Beta.
 # Need to look at non parameteric methods, i.e Beta and Dirichlet to replace the Gamma and Poisson.
 
-#' @param DZ
-#'
-#' @param SOB
-#' @param asset_data
-#' @param work_Order_Data
-#' @param cohortFailure
-#' @param cohortNr
-#' @param test_start
-#' @param test_end
+#' @param DZ character
+#' @param SOB integer
+#' @param asset_data dataframe
+#' @param work_Order_Data dataframe
+#' @param cohortFailure dataframe
+#' @param test_start date
+#' @param test_end date
+#' @param CohortID integer
 #'
 #' @importFrom lubridate "%within%"
 #' @return
-#' @export
 #'
-#' @examples
+#' @examples \dontrun{
+#' PipeIntensity <- function(DZ, SOB, asset_data, work_Order_Data, CohortID, cohortFailure,
+#'  test_start,test_end)
+#' }
 PipeIntensity <- function(DZ, SOB, asset_data, work_Order_Data, CohortID, cohortFailure,  test_start,
                           test_end) {
   print(CohortID)
@@ -628,21 +638,21 @@ PipeIntensity <- function(DZ, SOB, asset_data, work_Order_Data, CohortID, cohort
     plot <- FALSE
 
     if (plot) {
-      par(mfrow = c(1, 2))
-      prior <- rbeta(nrep, 1, 1)
+      graphics::par(mfrow = c(1, 2))
+      prior <- stats::rbeta(nrep, 1, 1)
       plot(1:nrep, posterior$V2,
         cex = 0, xlab = "generations", ylab = "p",
         main = "trace of MCMC\n accepted values of parameter p\n prior = beta(1,1) generations = 5000"
       )
-      lines(1:nrep, posterior$V2, cex = 0)
-      abline(h = mean(posterior$V2), col = "red")
-      plot(density(posterior$V2),
+      graphics::lines(1:nrep, posterior$V2, cex = 0)
+      graphics::abline(h = mean(posterior$V2), col = "red")
+      plot(stats::density(posterior$V2),
         xlim = c(min(min(prior), min((posterior$V2))), min(max(prior), max((posterior$V2)))),
-        ylim = c(0, max(max(density(prior)$y), max((density(posterior$V2)$y)))), main = "prior VS posterior\n prior= beta(1,1)",
+        ylim = c(0, max(max(stats::density(prior)$y), max((stats::density(posterior$V2)$y)))), main = "prior VS posterior\n prior= beta(1,1)",
         lwd = 3, col = "red"
       )
-      lines(density(prior), lwd = 3, lty = 2, col = "blue")
-      legend("topleft",
+      graphics::lines(stats::density(prior), lwd = 3, lty = 2, col = "blue")
+      graphics::legend("topleft",
         legend = c("prior density", "posterior density"),
         col = c("blue", "red"), lty = c(3, 1), lwd = c(3, 3), cex = 1
       )
@@ -651,7 +661,7 @@ PipeIntensity <- function(DZ, SOB, asset_data, work_Order_Data, CohortID, cohort
     # Gamma distributed Intensity
     # mean intensity, #Prior Intensity for cohort X
     meanIntensity <- mean(posterior[, 2])
-    sdIntensity <- sd(posterior[, 2])
+    sdIntensity <- stats::sd(posterior[, 2])
     beta <- sdIntensity / meanIntensity
     alpha <- meanIntensity^2 / sdIntensity
 
@@ -725,7 +735,7 @@ PipeIntensity <- function(DZ, SOB, asset_data, work_Order_Data, CohortID, cohort
         if (R > 1) {
           R <- 1
         }
-        random <- runif(1, 0, 1)
+        random <- stats::runif(1, 0, 1)
         if (random < R) {
           a <- a_prime
         }

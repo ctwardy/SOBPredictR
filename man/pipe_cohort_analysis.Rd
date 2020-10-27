@@ -2,18 +2,31 @@
 % Please edit documentation in R/pipeAnalysis.R
 \name{pipe_cohort_analysis}
 \alias{pipe_cohort_analysis}
-\title{Pipe AnalysisThis function groups and runs metrics on the pipes and work orders by cohort}
+\title{Pipe AnalysisThis function groups and runs metrics on the pipes and work orders by cohort
+
+imputes pipe material with random forest before metrics are run
+and returns these results in a list}
 \usage{
 pipe_cohort_analysis(outages, workorder_data, asset_data)
 }
 \arguments{
-\item{outages}{}
+\item{outages}{logical}
 
-\item{workorder_data}{}
+\item{workorder_data}{dataframe}
+
+\item{asset_data}{dataframe}
 }
 \value{
-
+list of dataframes, WOMetrics, Asset data with missing values imputed and a cohort Summary
 }
 \description{
 Pipe AnalysisThis function groups and runs metrics on the pipes and work orders by cohort
+
+imputes pipe material with random forest before metrics are run
+and returns these results in a list
+}
+\examples{
+\dontrun{
+pipe_cohort_analysis <- function(outages, workorder_data, asset_data)
+}
 }

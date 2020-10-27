@@ -2,7 +2,7 @@
 % Please edit documentation in R/SOBmodelmain.R
 \name{SOBmodelPredict}
 \alias{SOBmodelPredict}
-\title{Title}
+\title{SOB Model Predict}
 \usage{
 SOBmodelPredict(
   workorder_data,
@@ -19,11 +19,37 @@ SOBmodelPredict(
 )
 }
 \arguments{
-\item{savePaths}{}
+\item{workorder_data}{dataframe}
+
+\item{asset_data}{dataframe}
+
+\item{SOB_data}{dataframe}
+
+\item{soil_data}{dataframe}
+
+\item{val_start}{date}
+
+\item{val_end}{date}
+
+\item{test_start}{date}
+
+\item{test_end}{date}
+
+\item{outages}{logical}
+
+\item{predictors}{character}
+
+\item{ModelObj}{character}
 }
 \value{
-
+List of predictions and outputs from SOB modelling
 }
 \description{
-Title
+Uses New data to make SOB predictions
+}
+\examples{
+\dontrun{
+SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val_start,  val_end, test_start, test_end,
+outages = FALSE, predictors, ModelObj)
+}
 }

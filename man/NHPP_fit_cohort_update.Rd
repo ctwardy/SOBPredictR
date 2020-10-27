@@ -2,7 +2,7 @@
 % Please edit documentation in R/NHPPCohort.R
 \name{NHPP_fit_cohort_update}
 \alias{NHPP_fit_cohort_update}
-\title{Title}
+\title{NHPP_fit_cohort_update}
 \usage{
 NHPP_fit_cohort_update(
   asset_data,
@@ -19,11 +19,36 @@ NHPP_fit_cohort_update(
 )
 }
 \arguments{
-\item{inclsoilmoist}{}
+\item{asset_data}{dataframe}
+
+\item{work_Order_Data}{dataframe}
+
+\item{cohortNr}{integer}
+
+\item{TI1}{integer}
+
+\item{TI2}{integer}
+
+\item{FNRupp}{integer}
+
+\item{FNRlow}{integer}
+
+\item{plot}{logical}
+
+\item{minpkh}{integer}
+
+\item{rollingwin}{integer}
+
+\item{inclsoilmoist}{logical}
 }
 \value{
-
+dataframe of fitted parameters for pipe cohorts
 }
 \description{
-Title
+Similar function as NHPP fit cohort.  Update used when for making a year ahead prediction.  Not called directly
+}
+\examples{
+\dontrun{
+NHPP_fit_cohort_update <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNRupp, FNRlow, plot, minpkh, rollingwin, inclsoilmoist)
+}
 }

@@ -1,20 +1,18 @@
-#' Title
+#' Model PreProcess
 #'
-#' @param combined.df
-#' @param predictors
-#' @param classification
-#' @param rfe
-#' @param Nfailcutoff
-#' @param recPath
-#' @param rfePath
-#' @param outlierRemove
-#' @param imputeMissing
-#' @param savePath
+#' PreProcess data for training a new SOB model
+#'
+#' @param combined.df dataframe
+#' @param predictors character
+#' @param classification logical
+#' @param Nfailcutoff integer
+#' @param outlierRemove logical
 #'
 #' @return
-#' @export
 #'
-#' @examples
+#' @examples \dontrun{
+#' modelPreProc<- function(combined.df, predictors, classification, Nfailcutoff,  outlierRemove)
+#' }
 modelPreProc<- function(combined.df, predictors, classification, Nfailcutoff,  outlierRemove) {
 
   #This analyses sOB data and NHPP parameters
@@ -77,19 +75,19 @@ modelPreProc<- function(combined.df, predictors, classification, Nfailcutoff,  o
     combined.df2$PowerLaw1 <-imputedValues[,1]
     combined.df2$PowerLaw2 <-imputedValues[,2]
 
-  combined.df2[complete.cases(combined.df2),]->combined.df3  #remove NAs
+  combined.df2[stats::complete.cases(combined.df2),]->combined.df3  #remove NAs
   droplevels(combined.df3)->combined.df3
 
   colnames(combined.df3)->parameters
 
-  combined.df3[complete.cases(combined.df3),]->combined.df3
+  combined.df3[stats::complete.cases(combined.df3),]->combined.df3
 
   #remove outliers from SOM  #dont run as was removing actual fails
 
   OutD <-  function(x){
-    qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
-    caps <- quantile(x, probs=c(.05, .95), na.rm = T)
-    H <- 5 * IQR(x, na.rm = T)
+    qnt <- stats::quantile(x, probs=c(.25, .75), na.rm = T)
+    caps <- stats::quantile(x, probs=c(.05, .95), na.rm = T)
+    H <- 5 * stats::IQR(x, na.rm = T)
     x[x < (qnt[1] - H)]   <- caps[1]
     x[x>(qnt[2] + H)] <- caps[2]
     return(x)
@@ -202,23 +200,22 @@ modelPreProc<- function(combined.df, predictors, classification, Nfailcutoff,  o
 }
 
 
-#' Title
+#' Model PreProcess Update
 #'
-#' @param combined.df
-#' @param predictors
-#' @param classification
-#' @param rfe
-#' @param Nfailcutoff
-#' @param outlierRemove
-#' @param imputeMissing
-#' @param savePath
-#' @param rfePath
-#' @param recPath
+#' PreProcess new data for input to SOB model
 #'
-#' @return
-#' @export
+#' @param combined.df dataframe
+#' @param predictors list
+#' @param classification logical
+#' @param Nfailcutoff integer
+#' @param trained_rec character
+#' @param outlierRemove logical
 #'
-#' @examples
+#' @return list of dataframes which are used as inputs to Machine Learning Train
+#'
+#' @examples \dontrun{
+#' modelPreProc_update<- function(combined.df, predictors, classification, Nfailcutoff, outlierRemove, trained_rec)
+#' }
 modelPreProc_update<- function(combined.df, predictors, classification, Nfailcutoff, outlierRemove, trained_rec) {
 
   #This analyses sOB data and NHPP parameters
@@ -281,20 +278,20 @@ modelPreProc_update<- function(combined.df, predictors, classification, Nfailcut
     combined.df2$PowerLaw2 <-imputedValues[,2]
 
 
-  combined.df2[complete.cases(combined.df2),]->combined.df3  #remove NAs
+  combined.df2[stats::complete.cases(combined.df2),]->combined.df3  #remove NAs
   droplevels(combined.df3)->combined.df3
 
   colnames(combined.df3)->parameters
 
-  combined.df3[complete.cases(combined.df3),]->combined.df3
+  combined.df3[stats::complete.cases(combined.df3),]->combined.df3
 
 
   #remove outliers from SOM  #dont run as was removing actual fails
 
   OutD <-  function(x){
-    qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
-    caps <- quantile(x, probs=c(.05, .95), na.rm = T)
-    H <- 5 * IQR(x, na.rm = T)
+    qnt <- stats::quantile(x, probs=c(.25, .75), na.rm = T)
+    caps <- stats::quantile(x, probs=c(.05, .95), na.rm = T)
+    H <- 5 * stats::IQR(x, na.rm = T)
     x[x < (qnt[1] - H)]   <- caps[1]
     x[x>(qnt[2] + H)] <- caps[2]
     return(x)
@@ -390,20 +387,20 @@ Test  <- combined.df3[-trainIndex,]
   return(output)
 }
 
-#' Title
+#' Trains a stacked ensemble model using H20
 #'
-#' @param classification
-#' @param dftrain
-#' @param dftest
-#' @param upsample
-#' @param SMOTE
-#' @param path
-#' @param path2
+#' @param classification logical
+#' @param dftrain dataframe
+#' @param dftest dataframe
+#' @param upsample logical
+#' @param SMOTE logical
+#' @param path string
 #'
-#' @return
-#' @export
+#' @return list of objects including performance, confusion Matrices, finalModel, Hyperparameter grid, bestModelID and model saved path)
 #'
-#' @examples
+#' @examples \dontrun{
+#' GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, path)
+#' }
 GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, path){
 
   #use H20 package to build deep classifier

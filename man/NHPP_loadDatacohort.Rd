@@ -2,7 +2,7 @@
 % Please edit documentation in R/NHPPCohort.R
 \name{NHPP_loadDatacohort}
 \alias{NHPP_loadDatacohort}
-\title{Title}
+\title{NHPP_loadDatacohort}
 \usage{
 NHPP_loadDatacohort(
   work_order,
@@ -16,11 +16,30 @@ NHPP_loadDatacohort(
 )
 }
 \arguments{
-\item{test_end}{}
+\item{work_order}{datafrane}
+
+\item{val_start}{date}
+
+\item{val_end}{date}
+
+\item{outages}{logical}
+
+\item{maxN}{integer}
+
+\item{minN}{integer}
+
+\item{test_start}{date}
+
+\item{test_end}{date}
 }
 \value{
-
+datafrane for NHPP Cohort Fitting
 }
 \description{
-Title
+Analagous function to SOB, applied to pipe Cohorts
+}
+\examples{
+\dontrun{
+NHPP_loadDatacohort <- function(work_order, val_start, val_end, outages, maxN, minN, test_start, test_end)
+}
 }

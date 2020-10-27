@@ -1,17 +1,17 @@
 
 #' Pipe Analysis
 #' # This function groups and runs metrics on the pipes and work orders by cohort
-# imputes pipe material with random forest before metrics are run
-# and returns these results in a list
-#' @param workorder_data
+#' imputes pipe material with random forest before metrics are run
+#' and returns these results in a list
+#' @param workorder_data dataframe
+#' @param asset_data dataframe
+#' @param outages logical
 #'
-#' @param asset_data
-#' @param outages
+#' @return list of dataframes, WOMetrics, Asset data with missing values imputed and a cohort Summary
 #'
-#' @return
-#' @export
-#'
-#' @examples
+#' @examples \dontrun{
+#' pipe_cohort_analysis <- function(outages, workorder_data, asset_data)
+#' }
 pipe_cohort_analysis <- function(outages, workorder_data, asset_data) {
 
   # New filter, remove decommisioned and not operating Pipes
@@ -101,7 +101,8 @@ pipe_cohort_analysis <- function(outages, workorder_data, asset_data) {
 
   # remove main filter 4/10  trying to understand why N>2 drops from 800 to 70.
   if (outages == TRUE) {
-    workorder_data %>% filter(Number.of.Work.Order.Water.Outages > 0) ->
+    workorder_data %>%
+      dplyr::filter(Number.of.Work.Order.Water.Outages > 0) ->
     workorder_data
   }
 
@@ -127,7 +128,7 @@ pipe_cohort_analysis <- function(outages, workorder_data, asset_data) {
   asset_data %>%
     dplyr::select(I.D, Length, Install.Date) %>%
     dplyr::filter(Length > 0) -> subset_data
-  subset_data[complete.cases(subset_data), ] -> subset_data
+  subset_data[stats::complete.cases(subset_data), ] -> subset_data
 
   subset_data %>%
     dplyr::group_by(I.D) %>%
@@ -167,13 +168,12 @@ pipe_cohort_analysis <- function(outages, workorder_data, asset_data) {
   workorder_data %>%
     dplyr::select(I.D, Length, Install.Date) %>%
     dplyr::filter(Length > 0) -> subset_data2
-  subset_data2[complete.cases(subset_data2), ] -> subset_data2
+  subset_data2[stats::complete.cases(subset_data2), ] -> subset_data2
 
   subset_data2 %>%
     dplyr::group_by(I.D) %>%
     dplyr::summarize(NFails = dplyr::n()) %>%
     as.data.frame() -> PipeNumber2
-
 
   dplyr::left_join(PipeNumber, PipeNumber2, by = "I.D") -> table.result
   as.data.frame(table.result) -> table.result

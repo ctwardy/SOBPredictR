@@ -2,16 +2,25 @@
 % Please edit documentation in R/calcRepeats.R
 \name{G2analysis}
 \alias{G2analysis}
-\title{Title}
+\title{Functions to Visualise the results from calcNSLIDS}
 \usage{
 G2analysis(N, spatYear, df)
 }
 \arguments{
-\item{df}{}
+\item{N}{integer}
+
+\item{spatYear}{integer}
+
+\item{df}{dataframe}
 }
 \value{
-
+list of ggplot objects
 }
 \description{
-Title
+Functions to Visualise the results from calcNSLIDS
+}
+\examples{
+\dontrun{
+G2analysis(N=3, spatYear=2012, df=DF)
+}
 }

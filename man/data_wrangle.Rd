@@ -2,29 +2,23 @@
 % Please edit documentation in R/data_wrangle.R
 \name{data_wrangle}
 \alias{data_wrangle}
-\title{Data Wrangle
-This is a custom function which creates two cleaned data frames
-\enumerate{
-\item asset data and 2) a combined work order and asset data
-The cleaning steps ensures there are no duplicates and that the data is consistent
-}}
+\title{Data Wrangle}
 \usage{
 data_wrangle(imported_data)
 }
 \arguments{
-\item{imported_data}{}
+\item{imported_data}{list}
 }
 \value{
-list of cleaned data frames;  asset data and work order data
+list of 2 cleaned data frames:  asset data and work order data
 }
 \description{
-Data Wrangle
 This is a custom function which creates two cleaned data frames
-\enumerate{
-\item asset data and 2) a combined work order and asset data
+1: asset data and 2: a combined work order and asset data
 The cleaning steps ensures there are no duplicates and that the data is consistent
 }
-}
 \examples{
- \dontrun {data_wrangle(imported_data)}
+\dontrun{
+data_wrangle(imported_data)
+}
 }

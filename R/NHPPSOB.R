@@ -1,25 +1,29 @@
-#' Title
+#' NHPP_fit
 #'
-#' @param minNinSOB
-#' @param asset_data
-#' @param work_Order_Data
-#' @param SOBNr
-#' @param TI1
-#' @param TI2
-#' @param FNRupp
-#' @param FNRlow
-#' @param plot
-#' @param minpkh
-#' @param rollingwin
-#' @param inclsoilmoist
+#' Fits Non Homogeneous Poisson Model to Shut Off Blocks
 #'
-#' @return
-#' @export
+#' @param minNinSOB integer
+#' @param asset_data dataframe
+#' @param work_Order_Data dataframe
+#' @param SOBNr integer
+#' @param TI1 integer
+#' @param TI2 integer
+#' @param FNRupp integer
+#' @param FNRlow integer
+#' @param plot logical
+#' @param minpkh integer
+#' @param rollingwin integer
+#' @param inclsoilmoist logical
+#' @param soil_data dataframe
 #'
-#' @examples
+#' @return dataframe
+#'
+#' @examples \dontrun{
+#' NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, TI1, TI2, FNRupp, FNRlow, plot, minpkh, rollingwin, inclsoilmoist)
+#' }
 NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, TI1, TI2, FNRupp, FNRlow, plot, minpkh, rollingwin, inclsoilmoist) {
   result <- list(c())
-  SB_IDs[SOBNr] -> SB
+  all_SOBs[SOBNr] -> SB
   print(SB)
 
   work_Order_Data %>%
@@ -263,18 +267,18 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
     WDZ <- "Unknown"
   }
 
-  # Get Soil Moisture
-  if (inclsoilmoist == TRUE) {
-    SoilMoisture <- list()
-    for (i in 1:nrow(Fail_Dates)) {
-      print(paste0("SoilMoisture", i))
-      get.soil.moisture2(date = Fail_Dates[i, ], lat1 = mean_Latitude, lon1 = mean_Longitude) -> SoilMoisture[[i]]
-    }
-    do.call(rbind, SoilMoisture) -> SoilMoisture
-    max(SoilMoisture, na.rm = TRUE) -> MaxSM
-    min(SoilMoisture, na.rm = TRUE) -> MinSM
-    MaxSM - MinSM -> RangeSM
-  }
+  # # Get Soil Moisture
+  # if (inclsoilmoist == TRUE) {
+  #   SoilMoisture <- list()
+  #   for (i in 1:nrow(Fail_Dates)) {
+  #     print(paste0("SoilMoisture", i))
+  #     get.soil.moisture2(date = Fail_Dates[i, ], lat1 = mean_Latitude, lon1 = mean_Longitude) -> SoilMoisture[[i]]
+  #   }
+  #   do.call(rbind, SoilMoisture) -> SoilMoisture
+  #   max(SoilMoisture, na.rm = TRUE) -> MaxSM
+  #   min(SoilMoisture, na.rm = TRUE) -> MinSM
+  #   MaxSM - MinSM -> RangeSM
+  # }
 
   work_Order_Data %>%
     dplyr::filter(Shutoff.Block %in% SB) %>%
@@ -320,7 +324,7 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
     }
   )
 
-  as.numeric(mean(tail(diff(Fail_Dates[, ]), 3), na.rm = TRUE)) -> averagetimesincelast3
+  as.numeric(mean(utils::tail(diff(Fail_Dates[, ]), 3), na.rm = TRUE)) -> averagetimesincelast3
   work_Order_Data %>%
     dplyr::filter(Shutoff.Block %in% SB) %>%
     dplyr::distinct(as.Date(Reported.Date), .keep_all = TRUE) %>%
@@ -348,7 +352,7 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
     dplyr::mutate(status = ifelse(Val.Dates %in% as.Date(Fail_Dates[, ]), 1, 0)) %>%
     dplyr::mutate(cumsum = cumsum(status)) -> Failval
   Failval %>% dplyr::mutate(cum_rolling = zoo::rollapplyr(status, width = rollingwin, FUN = sum, partial = TRUE)) -> Failval
-  Nfailval <- tail(Failval$cumsum, 1)
+  Nfailval <- utils::tail(Failval$cumsum, 1)
 
 
   # new code, repeat above for the test period, this is separate to validation for ANN but should follow,  i.e. if want to test 12 months, in 2016, set validation to 3 years
@@ -359,7 +363,7 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
     dplyr::mutate(status = ifelse(Test.Dates %in% as.Date(Fail_Dates[, ]), 1, 0)) %>%
     dplyr::mutate(cumsum = cumsum(status)) -> Failtest
   Failtest %>% dplyr::mutate(cum_rolling = zoo::rollapplyr(status, width = rollingwin, FUN = sum, partial = TRUE)) -> Failtest
-  Nfailtest <- tail(Failtest$cumsum, 1)
+  Nfailtest <- utils::tail(Failtest$cumsum, 1)
 
 
   # dont run the NHPP fitting on SOB with limited failures, <maxNinSON
@@ -401,7 +405,7 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
         ifelse(nrow(peakdf) > 1,
           {
             nrow(peakdf) - 1 -> h
-            kmeans(peakdf[, 2:4], h) -> clusterpeak
+            stats::kmeans(peakdf[, 2:4], h) -> clusterpeak
             clusterpeak$centers[, 1] -> peak_timespeakdf
           },
           {
@@ -432,7 +436,7 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
     lapply(diffct, FUN = my_seq) -> temp
     unlist(temp) -> timetofailure
 
-    cbind(pipeFail, head(timetofailure, -1)) -> pipeFail
+    cbind(pipeFail, utils::head(timetofailure, -1)) -> pipeFail
     names(pipeFail)[5] <- "timetofailure"
 
     if (plot == TRUE) {
@@ -457,12 +461,12 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
     start_dateT <- 0 # lower bound of the observation window
     endT <- max(ct) # upper bound of the observation window
     sigma <- 90 # bandwidth for Gaussian kernel
-    densityEstimate <- density(ct, from = start_dateT, to = endT, n = 200, bw = sigma) # Gaussian kernel
+    densityEstimate <- stats::density(ct, from = start_dateT, to = endT, n = 200, bw = sigma) # Gaussian kernel
     timesD <- densityEstimate$x # extract times
     nRecurrences <- length(ct) # total number of recurrences
     intensityEstimate <- densityEstimate$y * nRecurrences # estimate of the intensity
     # implement edge correction
-    edgeCorrection <- pnorm(endT, timesD, sigma) - pnorm(start_dateT, timesD, sigma)
+    edgeCorrection <- stats::pnorm(endT, timesD, sigma) - stats::pnorm(start_dateT, timesD, sigma)
     # plot log(intensity) against time
 
     if (plot == TRUE) {
@@ -495,7 +499,7 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
           nobs * log(beta) - nobs * beta * log(eta) + (beta - 1) * sum(log(times)) - (Tend / eta)^beta
         }
         # refit the power-NHPP by optimization of the log-likelihood function
-        pow <- optim(c(beta, eta), llp,
+        pow <- stats::optim(c(beta, eta), llp,
           method = "BFGS", control = list(fnscale = -1),
           times = times, Tend = Tend, hessian = TRUE
         )
@@ -510,7 +514,7 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
         rootgamma1 <- function(nobs, times, Tend, gamma1) {
           sum(times) + nobs / gamma1 - (nobs * Tend * exp(gamma1 * Tend)) / (exp(gamma1 * Tend) - 1)
         }
-        gamma1 <- fzero(rootgamma1, x = 1e-3, nobs = nobs, times = times, Tend = Tend)$x
+        gamma1 <- pracma::fzero(rootgamma1, x = 1e-3, nobs = nobs, times = times, Tend = Tend)$x
         gamma0 <- log((nobs * gamma1) / (exp(Tend * gamma1) - 1))
         # log-likelihood of the loglinear-NHPP
         lll <- function(theta, times, Tend) {
@@ -519,7 +523,7 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
           nobs * gamma0 + gamma1 * sum(times) - (exp(gamma0) * (exp(gamma1 * Tend) - 1)) / gamma1
         }
         # refit the loglinear-NHPP by optimization of the log-likelihood function
-        loglin <- optim(c(gamma0, gamma1), lll,
+        loglin <- stats::optim(c(gamma0, gamma1), lll,
           method = "BFGS", control = list(fnscale = -1),
           times = times, Tend = Tend, hessian = TRUE
         )
@@ -539,7 +543,7 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
           ni * log(lambda) - lambda * Tend
         }
         # refit the homogeneous-NHPP by optimization of the log-likelihood function
-        hom <- optim(lambda, lll,
+        hom <- stats::optim(lambda, lll,
           method = "BFGS", control = list(fnscale = -1),
           times = times, Tend = Tend, hessian = TRUE
         )
@@ -562,11 +566,11 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
     ))[1:4]
     # 95% confidence intervals for beta and eta (normal-approximation)
     SEparms <- sqrt(diag(solve(-1 * ppPower$hessian)))
-    as.numeric(ppPower$parameters[1]) * exp(c(1, -1) * qnorm(.05 / 2) * SEparms[1] / ppPower$parameters[1])[1] -> b_lower
-    as.numeric(ppPower$parameters[1]) * exp(c(1, -1) * qnorm(.05 / 2) * SEparms[1] / ppPower$parameters[1])[2] -> b_upper
+    as.numeric(ppPower$parameters[1]) * exp(c(1, -1) * stats::qnorm(.05 / 2) * SEparms[1] / ppPower$parameters[1])[1] -> b_lower
+    as.numeric(ppPower$parameters[1]) * exp(c(1, -1) * stats::qnorm(.05 / 2) * SEparms[1] / ppPower$parameters[1])[2] -> b_upper
 
-    as.numeric(ppPower$parameters[2]) * exp(c(1, -1) * qnorm(.05 / 2) * SEparms[2] / ppPower$parameters[2])[1] -> eta_lower
-    as.numeric(ppPower$parameters[2]) * exp(c(1, -1) * qnorm(.05 / 2) * SEparms[2] / ppPower$parameters[2])[2] -> eta_upper
+    as.numeric(ppPower$parameters[2]) * exp(c(1, -1) * stats::qnorm(.05 / 2) * SEparms[2] / ppPower$parameters[2])[1] -> eta_lower
+    as.numeric(ppPower$parameters[2]) * exp(c(1, -1) * stats::qnorm(.05 / 2) * SEparms[2] / ppPower$parameters[2])[2] -> eta_upper
 
     ppPower$AIC -> power_AIC
     ppPower$loglik -> power_loglik
@@ -578,17 +582,17 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
     cf <- 1:length(ct)
     timesseq <- seq(1, max(ct), length.out = 100)
     if (plot == TRUE) {
-      jpeg(paste0("Outputs/Plot1_", SB, ".jpg"))
+      grDevices::jpeg(paste0("Outputs/Plot1_", SB, ".jpg"))
       plot(ct, cf, type = "p", xlab = "Time", ylab = "Cumulative recurrences", xlim = c(0, max(ct)))
-      lines(timesseq, (timesseq / ppPower$parameters[2])^ppPower$parameters[1], col = "red", lty = 2)
-      # lines(timesseq, exp(ppLoglin$parameters[1])*(exp(ppLoglin$parameters[2]*timesseq)-1)/ppLoglin$parameters[2], col="blue", lty=2)
-      # lines(timesseq, ppHom$parameters[1]*timesseq, col="orange", lty=2)
+      graphics::lines(timesseq, (timesseq / ppPower$parameters[2])^ppPower$parameters[1], col = "red", lty = 2)
+      # graphics::lines(timesseq, exp(ppLoglin$parameters[1])*(exp(ppLoglin$parameters[2]*timesseq)-1)/ppLoglin$parameters[2], col="blue", lty=2)
+      # graphics::lines(timesseq, ppHom$parameters[1]*timesseq, col="orange", lty=2)
 
-      legend("topleft",
+      graphics::legend("topleft",
         pch = "-", col = c("blue"),
         legend = c("Power-NHPP"), bty = "n", y.intersp = 1.5
       )
-      dev.off()
+      grDevices::dev.off()
     }
     ## diagnostics
 
@@ -634,26 +638,26 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
     # In other words, when plotting the HPP-times against the cumulative recurrences
     # for a unit-rate HPP, points are expected to lie close to the line y=x.
     if (plot == TRUE) {
-      jpeg(paste0("Outputs/Plot2_", SB, ".jpg"))
+      grDevices::jpeg(paste0("Outputs/Plot2_", SB, ".jpg"))
 
       plot(hppPower$eventIndex, hppPower$hppTimes,
         type = "l", col = "red",
         xlab = "Cumulative recurrences", ylab = "HPP-time"
       )
-      # lines(hppLoglin$eventIndex, hppLoglin$hppTimes, type="l", col="blue")
-      abline(a = 0, b = 1, col = "gray", lty = 2) # line y=x
-      legend("topleft",
+      # graphics::lines(hppLoglin$eventIndex, hppLoglin$hppTimes, type="l", col="blue")
+      graphics::abline(a = 0, b = 1, col = "gray", lty = 2) # line y=x
+      graphics::legend("topleft",
         pch = "-", col = c("red", "blue"),
         legend = c("Power-NHPP", "Loglinear-NHPP"), bty = "n", y.intersp = 1.5
       )
 
-      dev.off()
+      grDevices::dev.off()
     }
 
     # For any NHPP or HPP, the interrecurrence times should be independent.
     if (plot == TRUE) {
-      acf(diff(hppPower$hppTimes), main = "Interrecurrence times HPP") # Power-NHPP
-      # acf(diff(hppLoglin$hppTimes), main="Interrecurrence times HPP") #Loglinear-NHPP
+      stats::acf(diff(hppPower$hppTimes), main = "Interrecurrence times HPP") # Power-NHPP
+      # stats::acf(diff(hppLoglin$hppTimes), main="Interrecurrence times HPP") #Loglinear-NHPP
     }
 
     ## predicted cumulative recurrences
@@ -669,19 +673,19 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
         )
       })
       # 95% confidence intervals for cumulative number of recurrences
-      plci <- unlist(SEs[1, ]) * exp((qnorm(.025) * unlist(SEs[2, ])) / unlist(SEs[1, ]))
-      puci <- unlist(SEs[1, ]) * exp((qnorm(.975) * unlist(SEs[2, ])) / unlist(SEs[1, ]))
+      plci <- unlist(SEs[1, ]) * exp((stats::qnorm(.025) * unlist(SEs[2, ])) / unlist(SEs[1, ]))
+      puci <- unlist(SEs[1, ]) * exp((stats::qnorm(.975) * unlist(SEs[2, ])) / unlist(SEs[1, ]))
 
       # plot fit
       plot(ct, cf,
         type = "p", xlab = "Time",
         ylab = "Cumulative recurrences", main = "Power-NHPP"
       )
-      lines(timesseq, (timesseq / ppPower$parameters[2])^ppPower$parameters[1],
+      graphics::lines(timesseq, (timesseq / ppPower$parameters[2])^ppPower$parameters[1],
         col = "red", lty = 2
       )
-      lines(x = ts, y = plci, col = "blue", lty = 2)
-      lines(x = ts, y = puci, col = "blue", lty = 2)
+      graphics::lines(x = ts, y = plci, col = "blue", lty = 2)
+      graphics::lines(x = ts, y = puci, col = "blue", lty = 2)
 
       # plot the fitted loglinear-NHPP model including confidence intervals
       # ts <- seq(1, max(ct), length.out=100)
@@ -691,16 +695,16 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
       #                                                 constants=c(ts=ts[i])))
 
       # 95% confidence intervals for cumulative number of recurrences
-      # llci <- unlist(SEs[1,])*exp((qnorm(.025)*unlist(SEs[2,]))/unlist(SEs[1,]))
-      # luci <- unlist(SEs[1,])*exp((qnorm(.975)*unlist(SEs[2,]))/unlist(SEs[1,]))
+      # llci <- unlist(SEs[1,])*exp((stats::qnorm(.025)*unlist(SEs[2,]))/unlist(SEs[1,]))
+      # luci <- unlist(SEs[1,])*exp((stats::qnorm(.975)*unlist(SEs[2,]))/unlist(SEs[1,]))
 
       # plot fit
       # plot(ct, cf, type="p", xlab="Time",
       #    ylab="Cumulative recurrences", main="Loglinear-NHPP")
-      #  lines(timesseq, exp(ppLoglin$parameters[1])*(exp(ppLoglin$parameters[2]*timesseq)-1)/ppLoglin$parameters[2],
+      #  graphics::lines(timesseq, exp(ppLoglin$parameters[1])*(exp(ppLoglin$parameters[2]*timesseq)-1)/ppLoglin$parameters[2],
       #       col="red", lty=2)
-      # lines(x=ts, y=llci, col="blue", lty=2)
-      # lines(x=ts, y=luci, col="blue", lty=2)
+      # graphics::lines(x=ts, y=llci, col="blue", lty=2)
+      # graphics::lines(x=ts, y=luci, col="blue", lty=2)
     }
 
     # compute future number of recurrences (including 95% confidence interval)
@@ -714,14 +718,14 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
       vcov. = solve(-1 * ppPower$hessian), constants = c(ta = ta, tb = tb)
     )
     fnrp$Estimate # point estimate
-    fnrp$Estimate * exp(c(1, -1) * ((qnorm(.05 / 2) * fnrp$SE) / fnrp$Estimate)) # confidence interval
+    fnrp$Estimate * exp(c(1, -1) * ((stats::qnorm(.05 / 2) * fnrp$SE) / fnrp$Estimate)) # confidence interval
 
     # loglinear-NHPP
     # fnrl <- car::deltaMethod(ppLoglin$parameters,
     #                   g="(exp(gamma0)/gamma1)*(exp(gamma1*tb)-exp(gamma1*ta))",
     #                  vcov.=solve(-1*ppLoglin$hessian), constants=c(ta=ta, tb=tb))
     # fnrl$Estimate #point estimate
-    # fnrl$Estimate*exp(c(1,-1)*((qnorm(.05/2)*fnrl$SE)/fnrl$Estimate)) #confidence interval
+    # fnrl$Estimate*exp(c(1,-1)*((stats::qnorm(.05/2)*fnrl$SE)/fnrl$Estimate)) #confidence interval
 
     # compute likelihood based confidence interval for the future number
     # of recurrences (=FNR) in the interval [a,b]
@@ -746,7 +750,7 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
       plke <- rep(0, length(Ns))
 
       for (i in 1:length(Ns)) {
-        temp <- optim(parms, llikFNR,
+        temp <- stats::optim(parms, llikFNR,
           method = "BFGS", control = list(fnscale = -1),
           times = times, Tend = Tend, timeInterval = timeInterval,
           intensity = intensity, N = Ns[i]
@@ -782,7 +786,7 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
 
       # compute confidence bounds
       loglikw <- object$loglik
-      limit <- loglikw - .5 * qchisq(alpha, df = 1)
+      limit <- loglikw - .5 * stats::qchisq(alpha, df = 1)
 
       limitlkh <- function(parms, times, Tend, timeInterval, Ns, intensity) {
         profileLogLik(parms, times, Tend, timeInterval, Ns, intensity) - limit
@@ -791,12 +795,12 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
       lowerci <- NA
       upperci <- NA
 
-      try(lowerci <- round(fzero(limitlkh, c(rangeFNR[1], Np),
+      try(lowerci <- round(pracma::fzero(limitlkh, c(rangeFNR[1], Np),
         parms = parms,
         times = times, Tend = Tend, timeInterval = timeInterval,
         intensity = intensity
       )$x, 6), TRUE)
-      try(upperci <- round(fzero(limitlkh, c(Np, rangeFNR[2]),
+      try(upperci <- round(pracma::fzero(limitlkh, c(Np, rangeFNR[2]),
         parms = parms,
         times = times, Tend = Tend, timeInterval = timeInterval,
         intensity = intensity
@@ -804,7 +808,7 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
 
       # plot profile
       if (plot == TRUE) {
-        jpeg(paste0("Outputs/Plot3_", SB, ".jpg"))
+        grDevices::jpeg(paste0("Outputs/Plot3_", SB, ".jpg"))
         plot(Ns, ll,
           type = "l",
           xlab = paste("Future number of recurrences in time interval [",
@@ -813,12 +817,12 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
           ),
           ylab = "log-likelihood"
         )
-        abline(h = limit, col = "blue", lty = 2) # log-likelihood limit
-        abline(v = Np, col = "red", lty = 2) # include MLE for FNR
+        graphics::abline(h = limit, col = "blue", lty = 2) # log-likelihood limit
+        graphics::abline(v = Np, col = "red", lty = 2) # include MLE for FNR
         # include interval bounds
-        if (!is.na(lowerci)) abline(v = lowerci, col = "darkgreen", lty = 2)
-        if (!is.na(upperci)) abline(v = upperci, col = "darkgreen", lty = 2)
-        dev.off()
+        if (!is.na(lowerci)) graphics::abline(v = lowerci, col = "darkgreen", lty = 2)
+        if (!is.na(upperci)) graphics::abline(v = upperci, col = "darkgreen", lty = 2)
+        grDevices::dev.off()
       }
 
       # return bounds
@@ -850,13 +854,13 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
 
     # if(j/k<1){
     # if(plot==TRUE){
-    # jpeg(paste0("Outputs/Plot4_",SB,".jpg"))
+    # grDevices::jpeg(paste0("Outputs/Plot4_",SB,".jpg"))
     # p <- ggplot(data=dataf, aes(x = Fail_Day, y = Cumulative_Reoccurence, colour = Failure.Cause.Description)) +
     # geom_point(size=1) +
     # labs(title = "Cumulative Failures", x = "Time in Days", y = "Cumulative recurrences", color = "Failure Cause\n") +
     # theme_bw()
     # print(p)
-    # dev.off()}
+    # grDevices::dev.off()}
     # }
   } else {
     ppPower <- list()
@@ -935,26 +939,28 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
   # duane(diffct[1:10])
 }
 
-#' Title
+#' SOBNHPP_load
 #'
-#' @param mainOnly
-#' @param val_start
-#' @param val_end
-#' @param outages
-#' @param maxNinSOB
-#' @param work_Order_Data
-#' @param asset_data
-#' @param SOB_data
-#' @param minNinSOB
-#' @param test_start
-#' @param test_end
-#' @param subDir
-#' @param cohortResults
+#' Loads the data in preparation for the NHPP fitting step
 #'
-#' @return
-#' @export
+#' @param mainOnly logical
+#' @param val_start date
+#' @param val_end date
+#' @param outages logical
+#' @param maxNinSOB integer
+#' @param work_Order_Data dataframe
+#' @param asset_data datafrane
+#' @param SOB_data datafrane
+#' @param minNinSOB integer
+#' @param test_start date
+#' @param test_end date
+#' @param cohortResults datafrane
 #'
-#' @examples
+#' @return dataframe for inputting to NHPP fit
+#'
+#' @examples \dontrun{
+#' SOBNHPP_load <- function(mainOnly, val_start, val_end, outages, maxNinSOB, work_Order_Data, asset_data, SOB_data, minNinSOB, test_start, test_end, cohortResults)
+#' }
 SOBNHPP_load <- function(mainOnly, val_start, val_end, outages, maxNinSOB, work_Order_Data, asset_data, SOB_data, minNinSOB, test_start, test_end, cohortResults) {
 
   round(as.numeric(as.Date(val_end) - as.Date(val_start)) / 366, 0) ->> valyears
@@ -969,7 +975,9 @@ SOBNHPP_load <- function(mainOnly, val_start, val_end, outages, maxNinSOB, work_
   make.names(colnames(work_Order_Data)) -> colnames(work_Order_Data)
 
   SOB_data %>% dplyr::rename("SOB"=`Shutoff Block`) ->SOB_data
+
   sort(unique(SOB_data$SOB)) ->> all_SOBs
+
 
   print(paste0("the number of SOBS is equal to ", length(all_SOBs)))
 
@@ -1011,7 +1019,10 @@ SOBNHPP_load <- function(mainOnly, val_start, val_end, outages, maxNinSOB, work_
 
   # Get Dates
   dplyr::first(work_Order_Data$Reported.Date) ->> start_date
+
+
   dplyr::last(work_Order_Data$Reported.Date) ->> last_date
+
 
   last_date2 <- as.POSIXlt(last_date)
   as.POSIXlt(as.Date(val_start)) -> val_startdate
@@ -1019,12 +1030,18 @@ SOBNHPP_load <- function(mainOnly, val_start, val_end, outages, maxNinSOB, work_
 
   # last_date2$year <- val_startdate$year  # changed this to Val start date
   # as.Date(last_date2)->>end_date
+
   as.Date(val_startdate) ->> end_date
 
   as.numeric(as.Date(last_date) - as.Date(start_date)) ->> NdaysAll # entire data set
+
   as.numeric(as.Date(end_date) - as.Date(start_date)) ->> Ndays # less validation data
+
+
   seq.Date(as.Date(start_date), as.Date(end_date), by = "day") ->> All.Dates # excluding validation
+
   seq.Date(as.Date(val_start), as.Date(val_end), by = "day") ->> Val.Dates
+
   seq.Date(as.Date(test_start), as.Date(test_end), by = "day") ->> Test.Dates
 
   # loadSoilMoisture() -> soilMoisture
@@ -1038,7 +1055,7 @@ SOBNHPP_load <- function(mainOnly, val_start, val_end, outages, maxNinSOB, work_
 
 
   # Sys.Date()-1->end_date
-  work_Order_Data %>% dplyr::arrange(desc(totalNpershutoffblock)) -> work_Order_Data
+  work_Order_Data %>% dplyr::arrange(dplyr::desc(totalNpershutoffblock)) -> work_Order_Data
 
   work_Order_Data %>%
     dplyr::group_by(Shutoff.Block) %>%
@@ -1048,7 +1065,6 @@ SOBNHPP_load <- function(mainOnly, val_start, val_end, outages, maxNinSOB, work_
   work_Order_Data %>% dplyr::filter(Nevents > minNinSOB) -> work_Order_Data
 
   unique(work_Order_Data$Asset.Number) ->> asset_IDs
-
 
   # Add Cohort a and B
   #check columns  this is the NHPP cohort result
@@ -1070,7 +1086,9 @@ SOBNHPP_load <- function(mainOnly, val_start, val_end, outages, maxNinSOB, work_
 
   unique(work_Order_Data2$Shutoff.Block) ->> SB_IDs
 
+
   length(all_SOBs) ->> NSOBS
+
   work_Order_Data2[!work_Order_Data2$Shutoff.Block %in% "", ] -> work_Order_Data2
 
   return(work_Order_Data2)

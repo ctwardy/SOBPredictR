@@ -2,7 +2,7 @@
 % Please edit documentation in R/H20.R
 \name{modelPreProc}
 \alias{modelPreProc}
-\title{Title}
+\title{Model PreProcess}
 \usage{
 modelPreProc(
   combined.df,
@@ -13,11 +13,24 @@ modelPreProc(
 )
 }
 \arguments{
-\item{savePath}{}
+\item{combined.df}{dataframe}
+
+\item{predictors}{character}
+
+\item{classification}{logical}
+
+\item{Nfailcutoff}{integer}
+
+\item{outlierRemove}{logical}
 }
 \value{
 
 }
 \description{
-Title
+PreProcess data for training a new SOB model
+}
+\examples{
+\dontrun{
+modelPreProc<- function(combined.df, predictors, classification, Nfailcutoff,  outlierRemove)
+}
 }

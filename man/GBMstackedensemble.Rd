@@ -2,16 +2,31 @@
 % Please edit documentation in R/H20.R
 \name{GBMstackedensemble}
 \alias{GBMstackedensemble}
-\title{Title}
+\title{Trains a stacked ensemble model using H20}
 \usage{
 GBMstackedensemble(classification, dftrain, dftest, upsample, SMOTE, path)
 }
 \arguments{
-\item{path2}{}
+\item{classification}{logical}
+
+\item{dftrain}{dataframe}
+
+\item{dftest}{dataframe}
+
+\item{upsample}{logical}
+
+\item{SMOTE}{logical}
+
+\item{path}{string}
 }
 \value{
-
+list of objects including performance, confusion Matrices, finalModel, Hyperparameter grid, bestModelID and model saved path)
 }
 \description{
-Title
+Trains a stacked ensemble model using H20
+}
+\examples{
+\dontrun{
+GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, path)
+}
 }

@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "b.gladman@gmail.com",
            comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: Imports and analyses asset and work order information in order to predict whether a Shut Off Block will experience a failure  
+Description: "Imports and analyses asset and work order information in order to predict whether a Shut Off Block will experience a failure" 
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -39,7 +39,21 @@ Imports:
     cluster,
     rcompanion,
     knitr,
-    pROC
+    pROC,
+    sp,
+    ggpubr,
+    bomrang,
+    UBL,
+    abind,
+    arules,
+    car,
+    caret,
+    pracma,
+    purrr,
+    raster,
+    recipes,
+    scales,
+    zoo
 VignetteBuilder: knitr
 Suggests: 
     rmarkdown

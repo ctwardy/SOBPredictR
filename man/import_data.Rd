@@ -2,8 +2,7 @@
 % Please edit documentation in R/import.R
 \name{import_data}
 \alias{import_data}
-\title{Import
-This function is to import all requird data sources for}
+\title{Import}
 \usage{
 import_data(
   AssetPath,
@@ -37,14 +36,19 @@ import_data(
 \item{soilData}{Path to Asset Data tif files}
 
 \item{GISdata}{Path to GIS Data csv}
+
+\item{ClimatePath}{character}
+
+\item{SOBSLID}{dataframe}
 }
 \value{
-list
+list of dataframes
 }
 \description{
-Import
 This function is to import all requird data sources for
 }
 \examples{
-\dontrun {import_data(AssetPath="~Data/assetData.csv")}
+\dontrun{
+import_data(AssetPath="~Data/assetData.csv")
+}
 }

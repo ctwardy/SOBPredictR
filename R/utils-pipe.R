@@ -18,5 +18,5 @@ NULL
 #' @keywords internal
 #' @export
 #' @importFrom lubridate %within%
-#' @usage lhs \%within\% rhs
+#' @usage a \%within\% b
 NULL

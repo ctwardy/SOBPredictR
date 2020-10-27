@@ -2,7 +2,7 @@
 % Please edit documentation in R/NHPPCohort.R
 \name{NHPP_fit_cohort}
 \alias{NHPP_fit_cohort}
-\title{Title}
+\title{NHPP_fit_cohort}
 \usage{
 NHPP_fit_cohort(
   asset_data,
@@ -19,11 +19,36 @@ NHPP_fit_cohort(
 )
 }
 \arguments{
-\item{inclsoilmoist}{}
+\item{asset_data}{dataframe}
+
+\item{work_Order_Data}{dataframe}
+
+\item{cohortNr}{integer}
+
+\item{TI1}{integer}
+
+\item{TI2}{integer}
+
+\item{FNRupp}{numeric}
+
+\item{FNRlow}{numeric}
+
+\item{plot}{logical}
+
+\item{minpkh}{numeric}
+
+\item{rollingwin}{integer}
+
+\item{inclsoilmoist}{logical}
 }
 \value{
-
+dataframe of NHPP fitted parameters for all pipe Cohorts.  This is required for the NHPP
 }
 \description{
-Title
+Analagous function to SOB NHPP fit.  Note this function is not called directly but via the modelTrain function
+}
+\examples{
+\dontrun{
+NHPP_fit_cohort <- function(asset_data, work_Order_Data, cohortNr, TI1, TI2, FNRupp, FNRlow, plot, minpkh, rollingwin, inclsoilmoist)
+}
 }

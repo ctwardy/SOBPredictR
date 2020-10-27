@@ -2,29 +2,45 @@
 % Please edit documentation in R/pipemodelMain.R
 \name{PipeIntensity}
 \alias{PipeIntensity}
-\title{Title
-Note this determines the value of alpha or intensity of failure, lambda(t) for pipes.  It assumes that alpha is constant with time and is updated based on new evidence, i.e  N and T}
+\title{PipeIntensity}
 \usage{
 PipeIntensity(
   DZ,
   SOB,
   asset_data,
   work_Order_Data,
+  CohortID,
   cohortFailure,
-  cohortNr,
   test_start,
   test_end
 )
 }
 \arguments{
-\item{DZ}{}
+\item{DZ}{character}
 
-\item{test_end}{}
+\item{SOB}{integer}
+
+\item{asset_data}{dataframe}
+
+\item{work_Order_Data}{dataframe}
+
+\item{CohortID}{integer}
+
+\item{cohortFailure}{dataframe}
+
+\item{test_start}{date}
+
+\item{test_end}{date}
 }
 \value{
 
 }
 \description{
-Title
-Note this determines the value of alpha or intensity of failure, lambda(t) for pipes.  It assumes that alpha is constant with time and is updated based on new evidence, i.e  N and T
+This determines the value of alpha or intensity of failure, lambda(t) for pipes.  It assumes that alpha is constant with time and is updated based on new evidence, i.e  N and T
+}
+\examples{
+\dontrun{
+PipeIntensity <- function(DZ, SOB, asset_data, work_Order_Data, CohortID, cohortFailure,
+ test_start,test_end)
+}
 }

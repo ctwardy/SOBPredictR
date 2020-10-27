@@ -2,21 +2,21 @@
 % Please edit documentation in R/data_wrangle.R
 \name{coalesce2}
 \alias{coalesce2}
-\title{Modified Coalesce
-Coalesce two dataframes}
+\title{Modified Coalesce}
 \usage{
 coalesce2(...)
 }
 \arguments{
-\item{...}{}
+\item{...}{vector}
 }
 \value{
-dataframe
+vector
 }
 \description{
-Modified Coalesce
 Coalesce two dataframes
 }
 \examples{
-\dontrun {coalesce2(x, y)}
+\dontrun{
+coalesce2(x, y)
+}
 }

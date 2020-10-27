@@ -8,7 +8,9 @@ This function processes climate data from BOM including temp, rainfall,}
 getBOM(update, ClimatePath)
 }
 \arguments{
-\item{update}{}
+\item{update}{logical}
+
+\item{ClimatePath}{character}
 }
 \value{
 date frame of climate data
@@ -18,5 +20,7 @@ getBOM
 This function processes climate data from BOM including temp, rainfall,
 }
 \examples{
-\dontrun {getBOM(update=FALSE, ClimatePath="PathtoClimateData")}
+\dontrun{
+getBOM(update=FALSE, ClimatePath="PathtoClimateData")
+}
 }

@@ -2,23 +2,25 @@
 % Please edit documentation in R/import.R
 \name{get.soil.data}
 \alias{get.soil.data}
-\title{GetSoil Data
-#this function gets soil data i.e. clay, sand ect... by longitude and latitude}
+\title{GetSoil Data}
 \usage{
 get.soil.data(lat1, lon1, soil_data)
 }
 \arguments{
-\item{lat1}{latitude numeric}
+\item{lat1}{numeric}
 
-\item{lon1}{longitude numeric}
+\item{lon1}{numeric}
+
+\item{soil_data}{dataframe}
 }
 \value{
 
 }
 \description{
-GetSoil Data
-#this function gets soil data i.e. clay, sand ect... by longitude and latitude
+This function gets soil data i.e. clay, sand ect... by longitude and latitude
 }
 \examples{
-\dontrun {get.soil.data(lat=37.8, lon1=-144)}
+\dontrun{
+get.soil.data(lat=37.8, lon1=-144)
+}
 }

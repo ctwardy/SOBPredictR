@@ -4,7 +4,7 @@
 \alias{\%within\%}
 \title{Within operator}
 \usage{
-lhs \%within\% rhs
+a \%within\% b
 }
 \description{
 Within operator
