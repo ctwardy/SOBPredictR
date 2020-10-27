@@ -9,3 +9,14 @@
 #' @importFrom magrittr %>%
 #' @usage lhs \%>\% rhs
 NULL
+
+
+#' Within operator
+#'
+#' @name %within%
+#' @rdname interval
+#' @keywords internal
+#' @export
+#' @importFrom lubridate %within%
+#' @usage lhs \%within\% rhs
+NULL

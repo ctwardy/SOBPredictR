@@ -1070,7 +1070,7 @@ SOBNHPP_load <- function(mainOnly, val_start, val_end, outages, maxNinSOB, work_
 
   unique(work_Order_Data2$Shutoff.Block) ->> SB_IDs
 
-  length(SB_IDs) ->> NSOBS
+  length(all_SOBs) ->> NSOBS
   work_Order_Data2[!work_Order_Data2$Shutoff.Block %in% "", ] -> work_Order_Data2
 
   return(work_Order_Data2)

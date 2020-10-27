@@ -7,20 +7,15 @@
 SOBmodelPredict(
   workorder_data,
   asset_data,
+  SOB_data,
   soil_data,
   val_start,
-  predictors,
   val_end,
   test_start,
   test_end,
   outages = FALSE,
-  maxN,
-  minN,
-  rfe,
-  mainDir,
-  updateData,
-  forceUpdate,
-  savePaths
+  predictors,
+  ModelObj
 )
 }
 \arguments{

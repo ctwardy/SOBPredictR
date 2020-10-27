@@ -5,7 +5,7 @@
 \title{GetSoil Data
 #this function gets soil data i.e. clay, sand ect... by longitude and latitude}
 \usage{
-get.soil.data(lat1, lon1)
+get.soil.data(lat1, lon1, soil_data)
 }
 \arguments{
 \item{lat1}{latitude numeric}

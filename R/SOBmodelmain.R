@@ -201,7 +201,7 @@ SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predic
     path = modelSavePath
   ) -> ModelOut
 
-  list(CohortTable = Cohort_table_results, SOBInput = NHPPinput, SOBOutput = SOB_table_results, ModelInput = DF, ModelOutput = ModelOut) -> resultList
+  list(CohortWOs=CohortInput, CohortTable = Cohort_table_results, SOBInput = NHPPinput, SOBOutput = SOB_table_results, ModelInput = DF, ModelOutput = ModelOut) -> resultList
   return(resultList)
 }
 
@@ -295,8 +295,6 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
     asset_data = asset_data
   ) -> NHPPinput
 
-    ##
-
     ## Delete file if it exists
 
   i <- 0
@@ -310,8 +308,8 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
 
   ### replacement with tryCatch to hopefully fix this loop failing
 
-  for (i in startSOB:length(SB_IDs)) {
-    print(paste0("running SOB ID ", i, " of ", length(SB_IDs)))
+  for (i in startSOB:length(all_SOBs)) {
+    print(paste0("running SOB ID ", i, " of ", length(all_SOBs)))
 
     tryCatch(
       {
