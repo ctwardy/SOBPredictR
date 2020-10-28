@@ -55,8 +55,8 @@ argF <- function(cohorts, predictors, asset_data, soil_data, val_start, val_end,
 #' @param savePaths character
 #'
 #' @return  returns a list of dataframe outputs from Cohort, SOB and SOB modelling
-
 #'
+#' @export
 #' @examples \dontrun{
 #' SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predictors, val_start,  val_end, test_start, test_end, Nfailcutoff,
 #' outages = FALSE, mainDir, savePaths)
@@ -229,6 +229,7 @@ SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predic
 #'
 #' @return List of predictions and outputs from SOB modelling
 #'
+#' @export
 #' @examples \dontrun{
 #' SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val_start,  val_end, test_start, test_end,
 #' outages = FALSE, predictors, ModelObj)

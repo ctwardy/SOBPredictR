@@ -5,7 +5,7 @@
 #' @name %>%
 #' @rdname pipe
 #' @keywords internal
-#' @export
+#'
 #' @importFrom magrittr %>%
 #' @usage lhs \%>\% rhs
 NULL
@@ -16,7 +16,7 @@ NULL
 #' @name %within%
 #' @rdname interval
 #' @keywords internal
-#' @export
+#'
 #' @importFrom lubridate %within%
 #' @usage a \%within\% b
 NULL

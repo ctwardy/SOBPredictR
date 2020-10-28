@@ -8,7 +8,7 @@
 #' @param outages logical
 #'
 #' @return list of dataframes, WOMetrics, Asset data with missing values imputed and a cohort Summary
-#'
+#' @export
 #' @examples \dontrun{
 #' pipe_cohort_analysis <- function(outages, workorder_data, asset_data)
 #' }

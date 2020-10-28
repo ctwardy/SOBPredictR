@@ -32,6 +32,7 @@ coalesce2 <- function(...) {
 #'
 #' @return list of 2 cleaned data frames:  asset data and work order data
 #'
+#' @export
 #' @examples \dontrun{
 #' data_wrangle(imported_data)
 #' }
