@@ -154,6 +154,8 @@ get.soil.data <- function(lat1, lon1, soil_data) {
 #' @param SOBSLID dataframe
 #'
 #' @return  list of dataframes
+#'
+#' @export
 #' @examples \dontrun{
 #' import_data(AssetPath="~Data/assetData.csv")
 #' }

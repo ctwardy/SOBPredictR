@@ -108,7 +108,7 @@ ZoneAnalysis <- function(ZoneResult, WOD, ZoneNr, PrCutOff, maxLength) {
 #' @param maxLength numeric
 #'
 #' @return list of dataframes
-#'
+#' @export
 #' @examples \dontrun{
 #' ZoneResults<-function(PipeResults, PrCutOff, workorder_data, maxLength)
 #' }
@@ -472,6 +472,7 @@ pipeModel <- function(workorder_data, asset_data, cohort_data, SOBData, WDZAsset
 #' @importFrom lubridate "%within%"
 #' @return
 #'
+#' @export
 #' @examples \dontrun{
 #' PipeIntensity <- function(DZ, SOB, asset_data, work_Order_Data, CohortID, cohortFailure,
 #'  test_start,test_end)
