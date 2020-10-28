@@ -43,17 +43,16 @@ Imports:
     sp,
     ggpubr,
     bomrang,
-    UBL,
     abind,
     arules,
     car,
     caret,
     pracma,
     purrr,
-    raster,
     recipes,
     scales,
-    zoo
+    zoo,
+    raster
 VignetteBuilder: knitr
 Suggests: 
     rmarkdown

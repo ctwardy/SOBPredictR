@@ -877,6 +877,7 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
     NA -> power_AIC
     NA -> power_loglik
     NA -> n_greaterthan2peaks_lessthan45
+    mode_Failure.Cause<-"None"
     peak_timespeakdf <- NULL
     peakdf <- NULL
     peakClassStructure <- NA

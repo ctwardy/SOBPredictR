@@ -64,8 +64,6 @@ argF <- function(cohorts, predictors, asset_data, soil_data, val_start, val_end,
 SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predictors, val_start,  val_end, test_start, test_end, Nfailcutoff,
                           outages = FALSE, mainDir, savePaths) {
 
-  environment()->Env
-
   savePaths[[1]] -> path4
   savePaths[[2]] -> path1
   savePaths[[3]] -> path2
@@ -168,6 +166,7 @@ SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predic
     )
 
     if (!inherits(temp, "error")) {
+
       as.data.frame(temp$parameters$SOB) -> out[[i]]
       temp$timeseries -> out2[[i]]
       temp$timeseries$WorkType -> out4[[i]]
