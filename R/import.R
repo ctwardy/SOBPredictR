@@ -181,11 +181,10 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
     data.table::setDF(work_orders) -> work_orders
     data.table::setDF(work_orders_2019) -> work_orders_2019
 
-    make.names(colnames(work_orders), unique = TRUE) -> colnames(work_orders)
-
-    make.names(colnames(work_orders_2019), unique = TRUE) ->
-      colnames(work_orders_2019)
-
+    #make.names(colnames(work_orders), unique = TRUE) -> colnames(work_orders)
+    make.names(colnames(work_orders)) -> colnames(work_orders)
+    #make.names(colnames(work_orders_2019), unique = TRUE) -> colnames(work_orders_2019)
+    make.names(colnames(work_orders_2019)) -> colnames(work_orders_2019)
     #as.Date(lubridate::ymd_hms(work_orders$Reported.Date)) -> work_orders$Reported.Date
 
     colnames(work_orders) %in% colnames(work_orders_2019)
@@ -193,9 +192,6 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
 
     grep("Work.Order.Number", colnames(work_orders_2019)) -> Pos
     grep("Work.Order.Number", colnames(work_orders)) -> Pos2
-
-    nrow(work_orders_2019)
-    nrow(work_orders)
 
     work_orders_2019[!work_orders_2019[, Pos] %in% work_orders[, Pos2], ] ->
       work_orders_2019
