@@ -181,10 +181,9 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
     data.table::setDF(work_orders) -> work_orders
     data.table::setDF(work_orders_2019) -> work_orders_2019
 
-    #make.names(colnames(work_orders), unique = TRUE) -> colnames(work_orders)
-    make.names(colnames(work_orders)) -> colnames(work_orders)
-    #make.names(colnames(work_orders_2019), unique = TRUE) -> colnames(work_orders_2019)
-    make.names(colnames(work_orders_2019)) -> colnames(work_orders_2019)
+    make.names(colnames(work_orders), unique = TRUE) -> colnames(work_orders)
+    make.names(colnames(work_orders_2019), unique = TRUE) -> colnames(work_orders_2019)
+
     #as.Date(lubridate::ymd_hms(work_orders$Reported.Date)) -> work_orders$Reported.Date
 
     colnames(work_orders) %in% colnames(work_orders_2019)
@@ -199,16 +198,9 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
    # as.Date(lubridate::ymd_hms(work_orders_2019$Reported.Date)) ->
    #   work_orders_2019$Reported.Date
 
-    max(work_orders_2019$Reported.Date, na.rm = TRUE)
-    min(work_orders_2019$Reported.Date, na.rm = TRUE)
-
-    max(work_orders$Reported.Date, na.rm = TRUE)
-    min(work_orders$Reported.Date, na.rm = TRUE)
-
-    dplyr::arrange(work_orders, dplyr::desc(Reported.Date)) -> work_orders
-    dplyr::arrange(work_orders_2019, dplyr::desc(Reported.Date)) -> work_orders_2019
-
     rbind(work_orders_2019, work_orders) -> work_orders
+    dplyr::arrange(work_orders, dplyr::desc(Reported.Date)) -> work_orders
+
     return(work_orders)
   }
 
