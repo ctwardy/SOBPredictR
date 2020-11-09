@@ -182,7 +182,7 @@ calcrepeat <- function(SOBs, DF, listofYears) {
 #' @return if imported_data is a list of imported data frames
 #'         and df is a dataframe of cleaned workorders, function returns a dataframe
 #'         of workorders plus number of SLIDS experiencing 1,2...7 interruptions
-#'
+#' @export
 #' @examples \dontrun{
 #' calcNSLIDS(imported_data=Imported, df=DF)
 #' }
@@ -257,7 +257,7 @@ calcNSLIDS <- function(imported_data, df) {
 #' @param df dataframe
 #'
 #' @return list of ggplot objects
-#'
+#' @export
 #' @examples \dontrun{
 #' G2analysis(N=3, spatYear=2012, df=DF)
 #' }

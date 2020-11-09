@@ -17,21 +17,43 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(SOBPredictR)
 ```
-
+paths
+"C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/Pipe data2020.csv" -> AssetPath
+"C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/Emergency water jobs3.csv"->WorkOrderPath
+"C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/Emergency water jobs2019.csv" ->newworkordersPAth
+"C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/Emergency water jobs20190101202007008.csv"->newworkordersPAth2
+"C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/df_rainfall.RDS"->rainfall
+"C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/df_min_temp.RDS"->minTemp
+"C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/df_max_temp.RDS" ->maxTemp
+"C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/"->soilData
+"C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data//Interruptions pre 2015V2.csv" -> HansenPath
+"C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/climate.csv" -> ClimateData
+"C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/YVW_WATER_PIPE_Static_Pressure.csv" -> GISdata
+"C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/SOBSLIDnew.csv" -> SOBSLID 
 
 ```{r}
-# import_data(AssetPath="YVW/waterAssetAnal/Data/Pipe data2020.csv",
-#             WorkOrderPath="YVW/waterAssetAnal/Data/Pipe data2020.csv",
-#             newWorkOrdersPath="YVW/waterAssetAnal/Data/Pipe data2020.csv",
-#             HansenPath = "YVW/waterAssetAnal/Data/Pipe data2020.csv",
-#             rainfall="YVW/waterAssetAnal/Data/Pipe data2020.csv",
-#             ClimatePath="YVW/waterAssetAnal/Data/Pipe data2020.csv",
-#             minTemp="YVW/waterAssetAnal/Data/Pipe data2020.csv",
-#             maxTemp="YVW/waterAssetAnal/Data/Pipe data2020.csv",
-#             soilData = "YVW/waterAssetAnal/Data/Pipe data2020.csv",
-#             SOBSLID = "YVW/waterAssetAnal/Data/SOBSLIDnew.csv",
-#             GISdata = GISdata)->importedData
-# 
+
+
+
+tibble::glimpse(read.csv(AssetPath))
+tibble::glimpse(read.csv(WorkOrderPath))
+tibble::glimpse(read.csv(newworkordersPAth))
+tibble::glimpse(read.csv(newworkordersPAth2))
+tibble::glimpse(read.csv(HansenPath))
+tibble::glimpse(read.csv(GISdata))
+tibble::glimpse(read.csv(SOBSLID))
+# import_data(AssetPath="C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/Pipe data2020.csv",
+#             WorkOrderPath="C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/Emergency water jobs3.csv",
+#             newWorkOrdersPath="C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/Emergency water jobs2019.csv",
+#             HansenPath = "C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data//Interruptions pre 2015V2.csv",
+#             rainfall="C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/df_rainfall.RDS",
+#             ClimatePath="C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/climate.csv",
+#             minTemp="C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/df_min_temp.RDS",
+#             maxTemp="C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/df_max_temp.RDS",
+#             soilData = "C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/",
+#             SOBSLID = "C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/SOBSLIDnew.csv",
+#             GISdata = C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/YVW_WATER_PIPE_Static_Pressure.csv)->importedData
+
 # saveRDS(importedData, "YVW/PackageOutputs/importedData.RDS")
 ```
 

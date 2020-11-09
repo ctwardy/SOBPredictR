@@ -175,8 +175,6 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
   data.table::fread(WorkOrderPath, header = T, sep = ",", fill = TRUE) ->
     work_orders
 
-  as.Date(lubridate::ymd_hms(work_orders$`Reported Date`)) -> work_orders$`Reported Date`
-
   AddData <- function(path) {
     data.table::fread(path, header = T, sep = ",", fill = TRUE) -> work_orders_2019
 
@@ -184,8 +182,11 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
     data.table::setDF(work_orders_2019) -> work_orders_2019
 
     make.names(colnames(work_orders), unique = TRUE) -> colnames(work_orders)
+
     make.names(colnames(work_orders_2019), unique = TRUE) ->
       colnames(work_orders_2019)
+
+    #as.Date(lubridate::ymd_hms(work_orders$Reported.Date)) -> work_orders$Reported.Date
 
     colnames(work_orders) %in% colnames(work_orders_2019)
     colnames(work_orders) -> colnames(work_orders_2019)
@@ -199,8 +200,8 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
     work_orders_2019[!work_orders_2019[, Pos] %in% work_orders[, Pos2], ] ->
       work_orders_2019
 
-    as.Date(lubridate::ymd_hms(work_orders_2019$Reported.Date)) ->
-      work_orders_2019$Reported.Date
+   # as.Date(lubridate::ymd_hms(work_orders_2019$Reported.Date)) ->
+   #   work_orders_2019$Reported.Date
 
     max(work_orders_2019$Reported.Date, na.rm = TRUE)
     min(work_orders_2019$Reported.Date, na.rm = TRUE)
@@ -216,7 +217,6 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
   }
 
   AddData(path = newWorkOrdersPath) -> work_orders
-
 
   # read Grid data
   readRDS(rainfall) -> raindfall.GRID

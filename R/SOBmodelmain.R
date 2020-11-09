@@ -399,7 +399,6 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
   print(CM)
   as.data.frame(CM)
 
-
   h2o::h2o.performance(GBMModel, newdata = ModelData) -> performance
   performance@metrics$max_criteria_and_metric_scores %>%
     dplyr::filter(metric == "max f2") %>%
@@ -426,7 +425,6 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
 
   SOB_table_results %>% dplyr::select(SOB, ActualPipeFailVal, ActualFailVal) -> temLfJoin
 
-  nrow(predDF)
   cbind(newSOBIDS[, 1], pred) -> predDF
   as.data.frame(predDF) -> predDF
   colnames(predDF) <- c("SOB", "Prediction", "Prob Negative Outcome", "Prob Positive Outcome")
@@ -464,7 +462,6 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
     print.auc = TRUE, show.thres = TRUE
   )
 
-
   pROC::coords(roc2, "best", ret = c("threshold", "specificity", "1-npv"), transpose = FALSE) -> Metrs
   pROC::coords(roc2, "best", ret = "threshold", transpose = FALSE, best.method = "youden", best.weights = c(0.5, 0.1)) -> THold
   pROC::coords(roc2, "best", ret = "threshold", transpose = FALSE, best.method = "closest.topleft", best.weights = c(1, 0.1)) -> THold
@@ -483,6 +480,8 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
 
   predDF$Prediction <- final_preds
 
-  return(predDF)
+  list(predDF=predDF, CohortWOs=CohortInput, CohortTable = Cohort_table_results, SOBInput = NHPPinput, SOBOutput = SOB_table_results) -> resultList
+
+  return(resultList)
 }
 

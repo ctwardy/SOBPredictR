@@ -7,15 +7,16 @@
 
 <!-- badges: end -->
 
-The goal of SOBPredictR is to predict which Shut off block will fail …
+The goal of SOBPredictR is to predict which Shut off block will fail. It
+further analyses pipe asset information to estimate the probability a
+pipe will fail …
 
 ## Installation
 
-You can install the released version of SOBPredictR from
-[CRAN](https://CRAN.R-project.org) with:
+You can install the released version of SOBPredictR from gitHub with:
 
 ``` r
-install.packages("SOBPredictR")
+install_github("bgladman/SOBPredictR")
 ```
 
 And the development version from [GitHub](https://github.com/) with:

@@ -42,6 +42,8 @@ data_wrangle <- function(imported_data) {
   imported_data[[3]] -> asset_data
   imported_data[[9]] -> static_pressure
 
+
+
   # clean and process asset data
   coalesce2(asset_data$Pipe.Material, asset_data$Pipe.Material.1) ->
     asset_data$Pipe.Material
@@ -61,8 +63,9 @@ data_wrangle <- function(imported_data) {
 
   merge(asset_data, static_pressure[, c(2, 8)], by.x = "Asset.Number", by.y = "ASSETID", all.x = TRUE) -> asset_data
 
-
   # clean and process work order data
+  as.Date(lubridate::ymd_hms(work_orders$Reported.Date)) -> work_orders$Reported.Date
+
   # remove columns where all entries are NA
   work_orders <- work_orders[, colSums(is.na(work_orders)) < nrow(work_orders)]
   work_orders_pre2015 <- work_orders_pre2015[, colSums(is.na(work_orders_pre2015))
