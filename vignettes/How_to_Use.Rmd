@@ -33,15 +33,6 @@ paths
 
 ```{r}
 
-
-
-tibble::glimpse(read.csv(AssetPath))
-tibble::glimpse(read.csv(WorkOrderPath))
-tibble::glimpse(read.csv(newworkordersPAth))
-tibble::glimpse(read.csv(newworkordersPAth2))
-tibble::glimpse(read.csv(HansenPath))
-tibble::glimpse(read.csv(GISdata))
-tibble::glimpse(read.csv(SOBSLID))
 # import_data(AssetPath="C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/Pipe data2020.csv",
 #             WorkOrderPath="C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/Emergency water jobs3.csv",
 #             newWorkOrdersPath="C:/Users/bgladman/OneDrive/DataProjects/YVW/waterAssetAnal/Data/Emergency water jobs2019.csv",

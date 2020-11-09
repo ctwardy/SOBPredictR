@@ -2,8 +2,8 @@
 % Please edit documentation in R/pipeAnalysis.R
 \name{pipe_cohort_analysis}
 \alias{pipe_cohort_analysis}
-\title{Pipe AnalysisThis function groups and runs metrics on the pipes and work orders by cohort
-
+\title{Pipe Analysis
+This function groups and runs metrics on the pipes and work orders by cohort
 imputes pipe material with random forest before metrics are run
 and returns these results in a list}
 \usage{
@@ -20,8 +20,8 @@ pipe_cohort_analysis(outages, workorder_data, asset_data)
 list of dataframes, WOMetrics, Asset data with missing values imputed and a cohort Summary
 }
 \description{
-Pipe AnalysisThis function groups and runs metrics on the pipes and work orders by cohort
-
+Pipe Analysis
+This function groups and runs metrics on the pipes and work orders by cohort
 imputes pipe material with random forest before metrics are run
 and returns these results in a list
 }

@@ -1,6 +1,5 @@
-
 #' Pipe Analysis
-#' # This function groups and runs metrics on the pipes and work orders by cohort
+#' This function groups and runs metrics on the pipes and work orders by cohort
 #' imputes pipe material with random forest before metrics are run
 #' and returns these results in a list
 #' @param workorder_data dataframe
