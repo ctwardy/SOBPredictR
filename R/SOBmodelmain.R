@@ -345,7 +345,7 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
 
   if(!file.exists(SOBOutput_path)|forceUpdate==TRUE){
 
-  i <- 62000
+  i <- 0
 
   out <- list()
   out2 <- list()
@@ -396,8 +396,7 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
     }
 
   do.call(rbind, out) -> SOB_table_results
-  saveRDS(SOB_table_results, SOBOutput_path)}
-  else{readRDS(SOBOutput_path)->SOB_table_results}
+  saveRDS(SOB_table_results, SOBOutput_path)} else{readRDS(SOBOutput_path)->SOB_table_results}
 
   ###  Step4 - Note that accuracy and CM reporting only possible when running a full back test,  i.e where the second period is in the past.
     modelPreProc_update(
@@ -481,12 +480,6 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
   predDF$TrueOutcome <- as.factor(predDF$TrueOutcome)
   predDF$Prediction <- as.factor(predDF$Prediction)
 
-  print(table(predDF$Prediction))
-  print(table(predDF$TrueOutcome))
-
-  levels(predDF$Prediction)
-  levels(predDF$TrueOutcome)
-
   as.numeric(predDF$`Prob Positive Outcome`) -> Predictions
   predDF$TrueOutcome -> Labels
 
@@ -514,16 +507,12 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
   final_preds <- ifelse(Predictions > Thr, newPosClassLabel, newNegClassLabel)
 
   as.factor(final_preds) -> final_preds
-  print(table(final_preds))
-  print(table(Labels))
 
   caret::confusionMatrix(final_preds, Labels, positive = levels(Labels)[2]) -> CM
-  print(CM)
-  CM$byClass[7]
 
   predDF$Prediction <- final_preds
 
-  list(predDF=predDF, CohortWOs=CohortInput, CohortTable = Cohort_table_results, SOBInput = NHPPinput, SOBOutput = SOB_table_results) -> resultList
+  list(predDF=predDF, CohortWOs=CohortInput, CohortTable = Cohort_table_results, SOBInput = NHPPinput, SOBOutput = SOB_table_results, CM=CM, f1=  CM$byClass[7], Threshold=Thr, roc=roc2) -> resultList
 
   return(resultList)
 }
