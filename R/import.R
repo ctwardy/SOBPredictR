@@ -216,6 +216,7 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
                     header = TRUE,
                     na.strings = c("", "NA")
   ) -> work_orders_pre2015
+
   data.table::setDF(work_orders_pre2015) -> work_orders_pre2015
   make.names(colnames(work_orders_pre2015), unique = TRUE) ->
     colnames(work_orders_pre2015)
@@ -237,6 +238,7 @@ import_data <- function(AssetPath, WorkOrderPath, HansenPath, newWorkOrdersPath,
   }
   do.call(cbind, out) -> soil_table
 
+  dim(soil_table)
   as.data.frame(cbind(xycoord, soil_table)) -> soil_table
   colnames(soil_table) <- c(
     "x", "y", "BulkDensity", "Clay", "DepthofSoil",

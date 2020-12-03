@@ -62,17 +62,21 @@ argF <- function(cohorts, predictors, asset_data, soil_data, val_start, val_end,
 #' outages = FALSE, mainDir, savePaths)
 #' }
 SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predictors, val_start,  val_end, test_start, test_end, Nfailcutoff,
-                          outages = FALSE, mainDir, savePaths) {
-
-  savePaths[[1]] -> path4
-  savePaths[[2]] -> path1
-  savePaths[[3]] -> path2
-  savePaths[[4]] -> modelSavePath
-  savePaths[[5]] -> mainDir
-  savePaths[[6]] -> NHPPDir
+                          outages = FALSE, mainDir, modelUpdate, forceUpdate) {
 
   dir.create(mainDir, showWarnings = FALSE)
 
+  subDir <- as.character(lubridate::year(val_end))
+  CohortWOs_path <- file.path(mainDir, paste0("NHPP_cohort_input_", subDir, ".RDS"))
+  CohortTable_path <- file.path(mainDir, paste0("NHPP_cohort_outout_", subDir, ".RDS"))
+  SOBInput_path <- file.path(mainDir, paste0("NHPP_SOB_input_", subDir, ".RDS"))
+  SOBOutput_path <- file.path(mainDir, paste0("NHPP_SOB_outout_", subDir, ".RDS"))
+  ModelInput_path <- file.path(mainDir, paste0("GBM_model_input_", subDir, ".RDS"))
+  ModelOutput_path <- file.path(mainDir, paste0("GBM_model_output_", subDir, ".RDS"))
+  modelSavePath <- paste0(mainDir, "/GBMModel_", Sys.Date(), "_ValEnd_", subDir, "_NFailCutoff_", Nfailcutoff, "_useRFE_", rfe)
+
+
+  if(!file.exists(CohortWOs_path)|forceUpdate==TRUE){
   NHPP_loadDatacohort(
     work_order = workorder_data,
     outages = FALSE,
@@ -83,6 +87,11 @@ SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predic
     test_start = test_start,
     test_end = test_end
   ) -> CohortInput
+  saveRDS(CohortInput, CohortWOs_path)
+  } else {readRDS(CohortWOs_path) -> CohortInput}
+
+
+  if(!file.exists(CohortTable_path)|forceUpdate==TRUE){
 
   i <- 0
 
@@ -110,8 +119,11 @@ SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predic
   a <- Cohort_table_results$PowerLaw1.eta
 
   Cohort_table_results$intensity <- (B / a) * (T / a)^(B - 1)
+  saveRDS(Cohort_table_results, CohortTable_path)
+  } else {readRDS(CohortTable_path) -> Cohort_table_results}
 
 
+  if(!file.exists(SOBInput_path)|forceUpdate==TRUE){
   SOBNHPP_load(
     mainOnly = FALSE,
     outages = FALSE,
@@ -126,8 +138,11 @@ SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predic
     work_Order_Data = workorder_data,
     asset_data = asset_data
   ) -> NHPPinput
+    saveRDS(NHPPinput, SOBInput_path)
+  }else{ readRDS(SOBInput_path) -> NHPPinput}
 
 
+  if(!file.exists(SOBOutput_path)|forceUpdate==TRUE){
   i <- 0
 
   out <- list()
@@ -180,10 +195,11 @@ SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predic
   }
 
   do.call(rbind, out) -> SOB_table_results
-
+  saveRDS(SOB_table_results, SOBOutput_path)
+  } else{ readRDS(SOBOutput_path) ->SOB_table_results}
 
   # model
-
+if(modelUpdate==TRUE){
   modelPreProc(
     combined.df = SOB_table_results,
     predictors = predictors,
@@ -206,10 +222,15 @@ SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predic
     path = modelSavePath
   ) -> ModelOut
 
+  saveRDS(DF, ModelInput_path)
+  saveRDS(ModelOut, ModelOutput_path)
+
+} else{DF=readRDS(ModelInput_path)
+       ModelOut =readRDS(ModelOutput_path)
+       }
   list(CohortWOs=CohortInput, CohortTable = Cohort_table_results, SOBInput = NHPPinput, SOBOutput = SOB_table_results, ModelInput = DF, ModelOutput = ModelOut) -> resultList
   return(resultList)
 }
-
 
 #' SOB Model Predict
 #'
@@ -235,13 +256,26 @@ SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predic
 #' outages = FALSE, predictors, ModelObj)
 #' }
 SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val_start,  val_end, test_start, test_end,
-                            outages = FALSE, predictors, ModelObj) {
+                            outages = FALSE, predictors, ModelObj, forceUpdate) {
   environment()->Env
   maxN<-10000
   minN<-5
+
+  dir.create(mainDir, showWarnings = FALSE)
+
+  subDir <- as.character(lubridate::year(val_end))
+  CohortWOs_path <- file.path(mainDir, paste0("NHPP_cohort_input_", subDir, ".RDS"))
+  CohortTable_path <- file.path(mainDir, paste0("NHPP_cohort_outout_", subDir, ".RDS"))
+  SOBInput_path <- file.path(mainDir, paste0("NHPP_SOB_input_", subDir, ".RDS"))
+  SOBOutput_path <- file.path(mainDir, paste0("NHPP_SOB_outout_", subDir, ".RDS"))
+  ModelInput_path <- file.path(mainDir, paste0("GBM_model_input_", subDir, ".RDS"))
+  ModelOutput_path <- file.path(mainDir, paste0("GBM_model_output_", subDir, ".RDS"))
+
   ModelObj$ModelOutput[[8]] ->ModelPath
   Nfailcutoff<-ModelObj$ModelInput$param[[1]]
   ModelObj$ModelInput$Preprocess -> trained_rec
+
+  if(!file.exists(CohortWOs_path)|forceUpdate==TRUE){
 
   NHPP_loadDatacohort(
     work_order = workorder_data,
@@ -253,9 +287,12 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
     test_start = test_start,
     test_end = test_end
   ) -> CohortInput
+    saveRDS(CohortInput, CohortWOs_path)
+} else( readRDS(CohortWOs_path)->CohortInput)
 
-    ###
+  ###
 
+  if(!file.exists(CohortTable_path)|forceUpdate==TRUE){
     # Run on all Cohort IDs
   i <- 0
 
@@ -282,9 +319,11 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
   a <- Cohort_table_results$PowerLaw1.eta
 
   Cohort_table_results$intensity <- (B / a) * (T / a)^(B - 1)
-
+  saveRDS(Cohort_table_results, CohortTable_path)
+} else {readRDS(CohortTable_path)-> Cohort_table_results}
   ###
 
+  if(!file.exists(SOBInput_path)|forceUpdate==TRUE){
   SOBNHPP_load(
     mainOnly = FALSE,
     outages = FALSE,
@@ -300,9 +339,13 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
     asset_data = asset_data
   ) -> NHPPinput
 
+    saveRDS(NHPPinput, SOBInput_path)
+  } else{readRDS(SOBInput_path) -> NHPPinput}
     ## Delete file if it exists
 
-  i <- 0
+  if(!file.exists(SOBOutput_path)|forceUpdate==TRUE){
+
+  i <- 62000
 
   out <- list()
   out2 <- list()
@@ -353,9 +396,10 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
     }
 
   do.call(rbind, out) -> SOB_table_results
+  saveRDS(SOB_table_results, SOBOutput_path)}
+  else{readRDS(SOBOutput_path)->SOB_table_results}
 
   ###  Step4 - Note that accuracy and CM reporting only possible when running a full back test,  i.e where the second period is in the past.
-
     modelPreProc_update(
       combined.df = SOB_table_results,
       predictors = predictors,
@@ -370,7 +414,6 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
   DF$data[[2]] -> valData
   DF$data[[3]] -> SOBIDsTrain
   DF$data[[4]] -> SOBIDsTest
-
 
   #####  Prediction on next 12 month (as would be done in practice)
   as.data.frame(SOBIDsTrain) -> SOBIDsTrain

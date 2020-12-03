@@ -885,7 +885,7 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
 
   list(
     SOB = c(
-      SOB = SB_IDs[SOBNr], Ti1 = TI1, TI2 = TI2, FNR_power = temp1$Estimate, FNRCI1_power = temp1$lcl, FNRCI2_power = temp1$ucl,
+      SOB = all_SOBs[SOBNr], Ti1 = TI1, TI2 = TI2, FNR_power = temp1$Estimate, FNRCI1_power = temp1$lcl, FNRCI2_power = temp1$ucl,
       PowerLaw1 = as.numeric(ppPower$parameters[1]), PowerLaw2 = as.numeric(ppPower$parameters[2]),
       PowerLawLC1 = b_lower, PowerLawUC1 = b_upper, PowerLawLC2 = eta_lower,
       PowerLawUC2 = eta_upper, PowerAIC = power_AIC, PowerLL = power_loglik, NSLIDs = NSLID,
@@ -905,7 +905,7 @@ NHPP_fit <- function(minNinSOB, asset_data, soil_data, work_Order_Data, SOBNr, T
   if (inclsoilmoist == TRUE) {
     result1 <- NULL
     list(SOB = c(
-      SOB = SB_IDs[SOBNr], Ti1 = TI1, TI2 = TI2, FNR_power = temp1$Estimate, FNRCI1_power = temp1$lcl, FNRCI2_power = temp1$ucl,
+      SOB = all_SOBs[SOBNr], Ti1 = TI1, TI2 = TI2, FNR_power = temp1$Estimate, FNRCI1_power = temp1$lcl, FNRCI2_power = temp1$ucl,
       PowerLaw1 = as.numeric(ppPower$parameters[1]), PowerLaw1 = as.numeric(ppPower$parameters[2]),
       PowerLawLC1 = b_lower, PowerLawUC1 = b_upper, PowerLawLC2 = eta_lower,
       PowerLawUC2 = eta_upper, PowerAIC = power_AIC, PowerLL = power_loglik,
@@ -979,7 +979,6 @@ SOBNHPP_load <- function(mainOnly, val_start, val_end, outages, maxNinSOB, work_
 
   sort(unique(SOB_data$SOB)) ->> all_SOBs
 
-
   print(paste0("the number of SOBS is equal to ", length(all_SOBs)))
 
   if (outages == TRUE) {
@@ -1024,7 +1023,6 @@ SOBNHPP_load <- function(mainOnly, val_start, val_end, outages, maxNinSOB, work_
 
   dplyr::last(work_Order_Data$Reported.Date) ->> last_date
 
-
   last_date2 <- as.POSIXlt(last_date)
   as.POSIXlt(as.Date(val_start)) -> val_startdate
   as.POSIXlt(as.Date(val_end)) -> val_enddate
@@ -1053,7 +1051,6 @@ SOBNHPP_load <- function(mainOnly, val_start, val_end, outages, maxNinSOB, work_
       dplyr::filter(Class.Structure.1 == "Drinking Water Pipes") %>%
       dplyr::filter(Class.Structure %in% c("Repair Leaking Trunk Service", "Repair Leaking Water Main", "Repair Burst Water Main")) -> work_Order_Data
   }
-
 
   # Sys.Date()-1->end_date
   work_Order_Data %>% dplyr::arrange(dplyr::desc(totalNpershutoffblock)) -> work_Order_Data
@@ -1086,7 +1083,6 @@ SOBNHPP_load <- function(mainOnly, val_start, val_end, outages, maxNinSOB, work_
   work_Order_Data2$NinSOB <- NULL
 
   unique(work_Order_Data2$Shutoff.Block) ->> SB_IDs
-
 
   length(all_SOBs) ->> NSOBS
 

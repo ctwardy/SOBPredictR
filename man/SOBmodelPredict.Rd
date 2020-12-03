@@ -15,7 +15,8 @@ SOBmodelPredict(
   test_end,
   outages = FALSE,
   predictors,
-  ModelObj
+  ModelObj,
+  forceUpdate
 )
 }
 \arguments{

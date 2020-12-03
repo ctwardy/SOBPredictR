@@ -36,18 +36,17 @@ modelPreProc<- function(combined.df, predictors, classification, Nfailcutoff,  o
   combined.df$LengthAC[is.na(combined.df$LengthAC)]<-0
   combined.df$LengthCI[is.na(combined.df$LengthCI)]<-0
   combined.df$Nrepeats[is.na(combined.df$Nrepeats)]<-0
-  combined.df$NSLIDs[is.infinite(combined.df$NSLIDs)]<-mean(combined.df$NSLIDs, na.rm=TRUE)
+  combined.df$NSLIDs[is.infinite(combined.df$NSLIDs)]<-0
   combined.df$NSLIDs[is.na(combined.df$NSLIDs)]<-mean(combined.df$NSLIDs, na.rm=TRUE)
 
   combined.df$MaxCohortBeta[is.infinite(combined.df$MaxCohortBeta)]<-0
   combined.df$MinCohortEta[is.infinite(combined.df$MinCohortEta )]<-0
   combined.df$maxcohortFNR[is.infinite(combined.df$maxcohortFNR )]<-0
   combined.df$maxcohortInten[is.infinite(combined.df$maxcohortInten  )]<-0
-
-  predictors<-c(predictors, "assetSpread", "WDZ")  #add two new??
+  combined.df$Nrepeats[is.na(combined.df$Nrepeats)]<-0
+  combined.df$assetSpread[is.na(combined.df$assetSpread)]<-0
 
   combined.df %>% dplyr::select(predictors)->combined.df2
-  #make.names(levels(combined.df2$Pipe.Material))->levels(combined.df2$Pipe.Material)
 
   #lot of missing SOB eta and Beta,  lets impute the missing values using a random forest model
 
@@ -56,17 +55,15 @@ modelPreProc<- function(combined.df, predictors, classification, Nfailcutoff,  o
     #convert characters to factors
     combined.df2[sapply(combined.df2, is.character)] <- lapply(combined.df2[sapply(combined.df2, is.character)],
                                                                as.factor)
-
     #Pipe Material is unknown,  make NA
     combined.df2$Pipe.Material[combined.df2$Pipe.Material =="NA"]<-NA
 
     #impute pipe material  Still required???
     missRanger::missRanger(combined.df2, Pipe.Material ~ ., pmm.k = 5,  num.trees = 100) -> combined.df2
 
-    #skim(combined.df2)
+    #skimr::skim(combined.df2)
     ImpDFs<-replicate(20, {missRanger::missRanger(combined.df2, pmm.k = 5,  num.trees = 100) ->X
       X %>% dplyr::select(PowerLaw1, PowerLaw2, AvgAge.FUN)}, simplify=FALSE)
-
 
     all.matrix <- abind::abind(ImpDFs, along=3)
     apply(all.matrix, c(1,2), mean) -> imputedValues
@@ -102,11 +99,9 @@ modelPreProc<- function(combined.df, predictors, classification, Nfailcutoff,  o
   combined.df3[ , purrr::map_lgl(combined.df3, is.factor),drop=FALSE]->H
   combined.df3[ , purrr::map_lgl(combined.df3, is.character),drop=FALSE]->H2
   cbind(H,H2)->H
-  ###colnames(H)<-c("Pipe.Material")
 
   cbind(combined.df3nb, H)->combined.df3
 
-  #Split SOM_train and SOM_test??
   y_name<<-"ActualFailTest"
 
   trainIndex <- caret::createDataPartition(combined.df3[,y_name], p = .8,
@@ -219,6 +214,7 @@ modelPreProc<- function(combined.df, predictors, classification, Nfailcutoff,  o
 modelPreProc_update<- function(combined.df, predictors, classification, Nfailcutoff, outlierRemove, trained_rec) {
 
   #This analyses sOB data and NHPP parameters
+skimr::skim(combined.df)
 
   data.frame(lapply(combined.df, function(x) unlist(x)))->combined.df
   combined.df %>% dplyr::mutate(Avg.Age=as.numeric(lubridate::year(Sys.Date()) - AvgAge.FUN))->combined.df
@@ -240,18 +236,16 @@ modelPreProc_update<- function(combined.df, predictors, classification, Nfailcut
   combined.df$LengthAC[is.na(combined.df$LengthAC)]<-0
   combined.df$LengthCI[is.na(combined.df$LengthCI)]<-0
   combined.df$Nrepeats[is.na(combined.df$Nrepeats)]<-0
-  combined.df$NSLIDs[is.infinite(combined.df$NSLIDs)]<-mean(combined.df$NSLIDs, na.rm=TRUE)
+  combined.df$NSLIDs[is.infinite(combined.df$NSLIDs)]< 0
   combined.df$NSLIDs[is.na(combined.df$NSLIDs)]<-mean(combined.df$NSLIDs, na.rm=TRUE)
 
   combined.df$MaxCohortBeta[is.infinite(combined.df$MaxCohortBeta)]<-0
   combined.df$MinCohortEta[is.infinite(combined.df$MinCohortEta )]<-0
   combined.df$maxcohortFNR[is.infinite(combined.df$maxcohortFNR )]<-0
   combined.df$maxcohortInten[is.infinite(combined.df$maxcohortInten  )]<-0
+  combined.df$assetSpread[is.na(combined.df$assetSpread)]<-0
+  combined.df$Nrepeats[is.na(combined.df$Nrepeats)]<-0
 
-  summary(combined.df)
-  colnames(combined.df)
-
-  predictors<-c(predictors, "assetSpread", "WDZ")  #add two new??
   combined.df %>% dplyr::select(predictors)->combined.df2
 
   #lot of missing SOB eta and Beta,  lets impute the missing values using a random forest model
@@ -279,6 +273,8 @@ modelPreProc_update<- function(combined.df, predictors, classification, Nfailcut
 
 
   combined.df2[stats::complete.cases(combined.df2),]->combined.df3  #remove NAs
+
+  skimr::skim(combined.df2)
   droplevels(combined.df3)->combined.df3
 
   colnames(combined.df3)->parameters

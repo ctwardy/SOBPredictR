@@ -17,7 +17,8 @@ SOBmodelTrain(
   Nfailcutoff,
   outages = FALSE,
   mainDir,
-  savePaths
+  modelUpdate,
+  forceUpdate
 )
 }
 \arguments{
