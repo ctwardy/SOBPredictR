@@ -685,7 +685,8 @@ GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, p
   h2o::h2o.confusionMatrix(finalModel, newdata=dftest.hex, metric="f1")->confMat
   h2o::h2o.confusionMatrix(finalModel, newdata=dftrain.hex, metric="f1")->confMatTrain
 
-  list(perf=perf, conf=confMat, confTrain=confMatTrain, finalModel=finalModel, GBMgrid=grid, RFgrid=grid2, bestMod=minModelID, stackedGBMPath)->result
+  #list(perf=perf, conf=confMat, confTrain=confMatTrain, finalModel=finalModel, GBMgrid=grid, RFgrid=grid2, bestMod=minModelID, stackedGBMPath)->result
+  list(perf=perf, conf=confMat, confTrain=confMatTrain, finalModel=finalModel, GBMgrid=grid, RFgrid=grid2, bestMod=minModelID)->result
 
   return(result)
 
