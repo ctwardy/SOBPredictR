@@ -679,7 +679,8 @@ GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, p
 
   #modelfile <-  h2o.download_mojo(finalModel, path=getwd(), get_genmodel_jar=TRUE)
 
-  h2o::h2o.saveModel(finalModel, path = path, force = TRUE)->stackedGBMPath
+  #hashed out as suspect this is causing a too lond dir error
+  #h2o::h2o.saveModel(finalModel, path = path, force = TRUE)->stackedGBMPath
 
   h2o::h2o.confusionMatrix(finalModel, newdata=dftest.hex, metric="f1")->confMat
   h2o::h2o.confusionMatrix(finalModel, newdata=dftrain.hex, metric="f1")->confMatTrain

@@ -198,7 +198,6 @@ rankWDZ <- function(WDZPath, SOBResult, N) {
   WDZ$Water_Distribution_Zone <- gsub("Sub Zone ", "Res", WDZ$Water_Distribution_Zone)
   WDZ$Water_Distribution_Zone <- gsub(" No ", "Res ", WDZ$Water_Distribution_Zone)
 
-
   WDZ$Water_Distribution_Zone[WDZ$Water_Distribution_Zone == "UNKN"] <- NA
   WDZ$Water_Distribution_Zone[WDZ$Water_Distribution_Zone == "<NA>"] <- NA
   WDZ$Status[WDZ$Status == "DECOMMISSIONED"] <- NA
@@ -207,7 +206,7 @@ rankWDZ <- function(WDZPath, SOBResult, N) {
     dplyr::group_by(Water_Distribution_Zone) %>%
     dplyr::tally() %>%
     as.data.frame() -> TotSOBperZone
-  dplyr::left_join(SOBResult, WDZ, by = c("SOB" = "Shutoff_Block")) -> SOB_WDZ
+  dplyr::left_join(SOBResult[[1]], WDZ, by = c("SOB" = "Shutoff_Block")) -> SOB_WDZ
 
   SOB_WDZ$Water_Distribution_Zone[SOB_WDZ$Water_Distribution_Zone == "UNKN"] <- NA
   SOB_WDZ$Water_Distribution_Zone[SOB_WDZ$Water_Distribution_Zone == "<NA>"] <- NA
