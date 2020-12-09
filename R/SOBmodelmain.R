@@ -269,8 +269,7 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
   SOBInput_path <- file.path(mainDir, paste0("NHPP_SOB_input_", subDir, ".RDS"))
   SOBOutput_path <- file.path(mainDir, paste0("NHPP_SOB_outout_", subDir, ".RDS"))
   ModelInput_path <- file.path(mainDir, paste0("GBM_model_input_", subDir, ".RDS"))
-  #ModelOutput_path <- file.path(mainDir, paste0("GBM_model_output_", subDir, ".RDS"))
-  ModelObj$ModelOutput[[8]] ->ModelPath
+
   Nfailcutoff<-ModelObj$ModelInput$param[[1]]
   ModelObj$ModelInput$Preprocess -> trained_rec
 
