@@ -189,7 +189,7 @@ modelPreProc<- function(combined.df, predictors, classification, Nfailcutoff,  o
   dftrain %>% dplyr::select(ActualFail, predictors) -> dftrain
   dftest %>% dplyr::select(ActualFail, predictors) -> dftest
 
-  list(data=list(dftrain,dftest, TrainSOBs, TestSOBs), param=list(Nfailcutoff, rfe, predictors), Preprocess=trained_rec)->output
+  list(data=list(dftrain,dftest, TrainSOBs, TestSOBs), param=list(Nfailcutoff, predictors), Preprocess=trained_rec)->output
 
   return(output)
 }
@@ -397,7 +397,7 @@ Test  <- combined.df3[-trainIndex,]
 #' @examples \dontrun{
 #' GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, path)
 #' }
-GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, path){
+GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, path, nfolds, R){
 
   #use H20 package to build deep classifier
   ## R installation instructions are at http://h2o.ai/download
@@ -417,7 +417,7 @@ GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, p
   } else {
     dftrain.hex <- h2o::as.h2o(dftrain)}
 
-  splits <- h2o::h2o.splitFrame(dftrain.hex, ratios=0.75, seed=1234)
+  splits <- h2o::h2o.splitFrame(dftrain.hex, ratios=R, seed=1234)
   train  <- h2o::h2o.assign(splits[[1]], "train.hex") # 60%
   valid  <- h2o::h2o.assign(splits[[2]], "valid.hex") # 20%
 
@@ -430,10 +430,7 @@ GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, p
   response <- "ActualFail"
   predictors <- setdiff(names(dftrain.hex), response)
 
-  nrow(train)
-  nrow(valid)
-
-  nfolds<-10  #test with small number,  use n=10 for production
+  #nfolds<-10  #test with small number,  use n=10 for production
 
   #Model 1 Grid search
 

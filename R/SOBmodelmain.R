@@ -62,7 +62,8 @@ argF <- function(cohorts, predictors, asset_data, soil_data, val_start, val_end,
 #' outages = FALSE, mainDir, savePaths)
 #' }
 SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predictors, val_start,  val_end, test_start, test_end, Nfailcutoff,
-                          outages = FALSE, mainDir, modelUpdate, forceUpdate) {
+                          outages = FALSE, mainDir, modelUpdate, forceUpdate, rfe, CVfolds,
+                          Trainsplit) {
 
   dir.create(mainDir, showWarnings = FALSE)
 
@@ -219,6 +220,8 @@ if(modelUpdate==TRUE){
     dftest = valData,
     upsample = TRUE,
     SMOTE = FALSE,
+    nfolds=CVfolds,
+    R=Trainsplit,
     path = modelSavePath
   ) -> ModelOut
 

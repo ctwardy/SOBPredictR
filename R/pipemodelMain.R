@@ -293,18 +293,15 @@ pipeModel <- function(workorder_data, asset_data, cohort_data, SOBData, WDZAsset
   WDZID$Water.Distribution.Zone <- gsub('Resch', 'Research', WDZID$Water.Distribution.Zone)
   WDZID$Water.Distribution.Zone <- gsub('Sub Zone ', 'Res', WDZID$Water.Distribution.Zone)
   WDZID$Water.Distribution.Zone <- gsub(' No ', 'Res ', WDZID$Water.Distribution.Zone)
-  # #
 
   Zones -> DZs
+  cohort_IDs <- unique(cohort_data$Cohort)
 
-  # cohort_IDs <- unique(cohort_data$Cohort)
-
-  # table2 select all SOBS in zone(s), filter out predicted to fail later
   for (j in 1:length(DZs)) {
     print(paste0("Running Analysis on DZ ", DZs[[j]]))
 
     list(data.frame()) -> result
-
+    DZs[[j]] ->DZ
     asset_data %>%
       dplyr::filter(Distribution.Zone.Name %in% DZ) %>%
       dplyr::distinct(I.D) -> CohortZoneIDs
@@ -316,7 +313,7 @@ pipeModel <- function(workorder_data, asset_data, cohort_data, SOBData, WDZAsset
 
     # Pipe failure Intensity for all Cohorts i in DZ j
     # how much is the prior distribution influencing the posterior intensity???  how much does the gamma sampling contribute to the variance between assets versus the individual asset failure
-    for (i in 144:length(CohortZoneIDs)) {
+    for (i in 1:length(CohortZoneIDs)) {
 
       # Use table2$SOBs to calculate intensity of all assets in trial zone(s), not just thos in SOBs predited to fail by model.
 
@@ -331,6 +328,7 @@ pipeModel <- function(workorder_data, asset_data, cohort_data, SOBData, WDZAsset
             asset_data = asset_data,
             work_Order_Data = workorder_data,
             CohortID=CohortZoneIDs[i],
+            KnownCohorts=cohort_IDs,
             test_start = test_start,
             test_end = test_end
           )) -> temp
@@ -476,13 +474,13 @@ pipeModel <- function(workorder_data, asset_data, cohort_data, SOBData, WDZAsset
 #' PipeIntensity <- function(DZ, SOB, asset_data, work_Order_Data, CohortID, cohortFailure,
 #'  test_start,test_end)
 #' }
-PipeIntensity <- function(DZ, SOB, asset_data, work_Order_Data, CohortID, cohortFailure,  test_start,
+PipeIntensity <- function(DZ, SOB, asset_data, work_Order_Data, CohortID, KnownCohorts, cohortFailure,  test_start,
                           test_end) {
   print(CohortID)
 
-  CohortID %in% cohort_IDs -> knownCohort
+  CohortID %in% KnownCohorts -> knownCohort
   if(knownCohort){
-  which(cohort_IDs %in%  CohortID) ->CohortNr
+  which(KnownCohorts %in%  CohortID) ->CohortNr
   cohortFailure[CohortNr, ] -> cohortFailure
   } else
 
