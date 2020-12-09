@@ -256,7 +256,7 @@ if(modelUpdate==TRUE){
 #' outages = FALSE, predictors, ModelObj)
 #' }
 SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val_start,  val_end, test_start, test_end,
-                            outages = FALSE, predictors, ModelObj, forceUpdate) {
+                            outages = FALSE, predictors, ModelObj, ModelPath, forceUpdate) {
   environment()->Env
   maxN<-10000
   minN<-5
@@ -269,8 +269,7 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
   SOBInput_path <- file.path(mainDir, paste0("NHPP_SOB_input_", subDir, ".RDS"))
   SOBOutput_path <- file.path(mainDir, paste0("NHPP_SOB_outout_", subDir, ".RDS"))
   ModelInput_path <- file.path(mainDir, paste0("GBM_model_input_", subDir, ".RDS"))
-  ModelOutput_path <- file.path(mainDir, paste0("GBM_model_output_", subDir, ".RDS"))
-
+  #ModelOutput_path <- file.path(mainDir, paste0("GBM_model_output_", subDir, ".RDS"))
   ModelObj$ModelOutput[[8]] ->ModelPath
   Nfailcutoff<-ModelObj$ModelInput$param[[1]]
   ModelObj$ModelInput$Preprocess -> trained_rec
@@ -431,7 +430,8 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
 
   ModelData <- h2o::as.h2o(newData)
 
-  h2o::h2o.loadModel(ModelPath) -> GBMModel
+  h2o::h2o.loadModel(ModelPath) -> GBMModel  #path was removed from modelTrain output list
+
   GBMModel@parameters$x -> ModelFeatures
   pred <- h2o::h2o.predict(GBMModel, ModelData)
 
