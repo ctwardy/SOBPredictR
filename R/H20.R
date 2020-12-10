@@ -36,8 +36,7 @@ modelPreProc<- function(combined.df, predictors, classification, Nfailcutoff,  o
   combined.df$LengthAC[is.na(combined.df$LengthAC)]<-0
   combined.df$LengthCI[is.na(combined.df$LengthCI)]<-0
   combined.df$Nrepeats[is.na(combined.df$Nrepeats)]<-0
-  combined.df$NSLIDs[is.infinite(combined.df$NSLIDs)]<-0
-  combined.df$NSLIDs[is.na(combined.df$NSLIDs)]<-mean(combined.df$NSLIDs, na.rm=TRUE)
+  combined.df$NSLIDs[is.infinite(combined.df$NSLIDs)]<-NA
 
   combined.df$MaxCohortBeta[is.infinite(combined.df$MaxCohortBeta)]<-0
   combined.df$MinCohortEta[is.infinite(combined.df$MinCohortEta )]<-0
@@ -61,6 +60,8 @@ modelPreProc<- function(combined.df, predictors, classification, Nfailcutoff,  o
     #impute pipe material  Still required???
     missRanger::missRanger(combined.df2, Pipe.Material ~ ., pmm.k = 5,  num.trees = 100) -> combined.df2
 
+    missRanger::missRanger(combined.df2, NSLIDs ~ ., pmm.k = 5,  num.trees = 100) -> combined.df2
+    table(combined.df2$NSLIDs)
     ImpDFs<-replicate(20, {missRanger::missRanger(combined.df2, pmm.k = 5,  num.trees = 100) ->X
       X %>% dplyr::select(PowerLaw1, PowerLaw2, AvgAge.FUN)}, simplify=FALSE)
 
@@ -234,8 +235,7 @@ modelPreProc_update<- function(combined.df, predictors, classification, Nfailcut
   combined.df$LengthAC[is.na(combined.df$LengthAC)]<-0
   combined.df$LengthCI[is.na(combined.df$LengthCI)]<-0
   combined.df$Nrepeats[is.na(combined.df$Nrepeats)]<-0
-  combined.df$NSLIDs[is.infinite(combined.df$NSLIDs)]< 0
-  combined.df$NSLIDs[is.na(combined.df$NSLIDs)]<-mean(combined.df$NSLIDs, na.rm=TRUE)
+  combined.df$NSLIDs[is.infinite(combined.df$NSLIDs)]<- NA
 
   combined.df$MaxCohortBeta[is.infinite(combined.df$MaxCohortBeta)]<-0
   combined.df$MinCohortEta[is.infinite(combined.df$MinCohortEta )]<-0
@@ -259,6 +259,8 @@ modelPreProc_update<- function(combined.df, predictors, classification, Nfailcut
     #impute pipe material
     missRanger::missRanger(combined.df2, Pipe.Material ~ ., pmm.k = 5,  num.trees = 100) -> combined.df2
 
+    missRanger::missRanger(combined.df2, NSLIDs ~ ., pmm.k = 5,  num.trees = 100) -> combined.df2
+
     ImpDFs<-replicate(20, {missRanger::missRanger(combined.df2, pmm.k = 5,  num.trees = 100) ->X
       X %>% dplyr::select(PowerLaw1, PowerLaw2, AvgAge.FUN)}, simplify=FALSE)
 
@@ -269,7 +271,7 @@ modelPreProc_update<- function(combined.df, predictors, classification, Nfailcut
     combined.df2$PowerLaw1 <-imputedValues[,1]
     combined.df2$PowerLaw2 <-imputedValues[,2]
 
-
+summary(combined.df2)
   combined.df2[stats::complete.cases(combined.df2),]->combined.df3  #remove NAs
 
   droplevels(combined.df3)->combined.df3

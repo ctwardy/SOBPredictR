@@ -400,7 +400,8 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
   saveRDS(SOB_table_results, SOBOutput_path)} else{readRDS(SOBOutput_path)->SOB_table_results}
 
   ###  Step4 - Note that accuracy and CM reporting only possible when running a full back test,  i.e where the second period is in the past.
-    modelPreProc_update(
+
+  modelPreProc_update(
       combined.df = SOB_table_results,
       predictors = predictors,
       classification = TRUE,
