@@ -61,7 +61,6 @@ modelPreProc<- function(combined.df, predictors, classification, Nfailcutoff,  o
     #impute pipe material  Still required???
     missRanger::missRanger(combined.df2, Pipe.Material ~ ., pmm.k = 5,  num.trees = 100) -> combined.df2
 
-    #skimr::skim(combined.df2)
     ImpDFs<-replicate(20, {missRanger::missRanger(combined.df2, pmm.k = 5,  num.trees = 100) ->X
       X %>% dplyr::select(PowerLaw1, PowerLaw2, AvgAge.FUN)}, simplify=FALSE)
 
@@ -214,7 +213,6 @@ modelPreProc<- function(combined.df, predictors, classification, Nfailcutoff,  o
 modelPreProc_update<- function(combined.df, predictors, classification, Nfailcutoff, outlierRemove, trained_rec) {
 
   #This analyses sOB data and NHPP parameters
-skimr::skim(combined.df)
 
   data.frame(lapply(combined.df, function(x) unlist(x)))->combined.df
   combined.df %>% dplyr::mutate(Avg.Age=as.numeric(lubridate::year(Sys.Date()) - AvgAge.FUN))->combined.df
@@ -274,13 +272,11 @@ skimr::skim(combined.df)
 
   combined.df2[stats::complete.cases(combined.df2),]->combined.df3  #remove NAs
 
-  skimr::skim(combined.df2)
   droplevels(combined.df3)->combined.df3
 
   colnames(combined.df3)->parameters
 
   combined.df3[stats::complete.cases(combined.df3),]->combined.df3
-
 
   #remove outliers from SOM  #dont run as was removing actual fails
 
