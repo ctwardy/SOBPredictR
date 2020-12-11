@@ -440,10 +440,11 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
 
   as.data.frame(pred) -> pred
 
-  h2o::h2o.confusionMatrix(GBMModel, newdata = ModelData, metric = "f1") -> CM
-  print(CM)
-  as.data.frame(CM)
+  #h2o::h2o.confusionMatrix(GBMModel, newdata = ModelData, metric = "f1") -> CM
 
+
+  h2o::h2o.varimp(GBMModel)
+  h2o::h2o.varimp_plot(GBMModel, 10)-> VarImpPlot
   h2o::h2o.performance(GBMModel, newdata = ModelData) -> performance
   performance@metrics$max_criteria_and_metric_scores %>%
     dplyr::filter(metric == "max f2") %>%
@@ -518,7 +519,7 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
 
   predDF$Prediction <- final_preds
 
-  list(predDF=predDF, CohortWOs=CohortInput, CohortTable = Cohort_table_results, SOBInput = NHPPinput, SOBOutput = SOB_table_results, CM=CM, f1=  CM$byClass[7], Threshold=Thr, roc=roc2) -> resultList
+  list(predDF=predDF, CohortWOs=CohortInput, CohortTable = Cohort_table_results, SOBInput = NHPPinput, SOBOutput = SOB_table_results, CM=CM, f1=  CM$byClass[7], Threshold=Thr, roc=roc2, varImp=VarImpPlot) -> resultList
 
   return(resultList)
 }
