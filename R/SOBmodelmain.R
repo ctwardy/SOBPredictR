@@ -455,9 +455,10 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
     dplyr::filter(metric == "max f1") %>%
     dplyr::select(threshold) -> maxf1_Th
 
-  (maxf1_Th + maxf0.5_Th) / 2 -> Th
+  (maxf2_Th+ maxf1_Th + maxf0.5_Th) / 3 -> Th
+   #maxf1_Th -> Th
 
-  # Predicted class in predict not equal to the results in the confusion matrix using same ModelData.  #need to manually update predictions using a threshold.
+ # Predicted class in predict not equal to the results in the confusion matrix using same ModelData.  #need to manually update predictions using a threshold.
   # using an average of threshold for maximum f1 and f0.5.
 
   #
@@ -475,7 +476,7 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
   colnames(predDF) <- c("SOB", "Prediction", "Prob Negative Outcome", "Prob Positive Outcome")
 
   dplyr::left_join(temLfJoin, predDF, by = "SOB") -> predDF
-  nrow(predDF)
+
   ifelse(predDF$ActualFailVal >= Nfailcutoff, newPosClassLabel, newNegClassLabel) -> TrueLabel
 
   predDF$TrueOutcome <- TrueLabel
@@ -506,12 +507,14 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
   pROC::coords(roc2, "best", ret = "threshold", transpose = FALSE, best.method = "closest.topleft", best.weights = c(1, 0.1)) -> THold
   pROC::coords(roc2, "local maximas", ret = c("threshold", "sens", "spec", "ppv", "npv"), transpose = FALSE) -> ResultTable
 
+  #Metrs[[1]]-> Thr
+  #0.5-> Thr
   Th[, ] -> Thr
-  final_preds <- ifelse(Predictions > Thr, newPosClassLabel, newNegClassLabel)
+  final_preds <- ifelse(Predictions >= Thr, newPosClassLabel, newNegClassLabel)
 
   as.factor(final_preds) -> final_preds
 
-  caret::confusionMatrix(final_preds, Labels, positive = levels(Labels)[2]) -> CM
+  caret::confusionMatrix(final_preds, Labels, positive = levels(Labels)[1]) -> CM
 
   predDF$Prediction <- final_preds
 
