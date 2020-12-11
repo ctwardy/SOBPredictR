@@ -259,7 +259,7 @@ if(modelUpdate==TRUE){
 #' outages = FALSE, predictors, ModelObj)
 #' }
 SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val_start,  val_end, test_start, test_end,
-                            outages = FALSE, predictors, ModelObj, ModelPath, forceUpdate) {
+                            outages = FALSE, predictors, ModelObj, mainDir, ModelPath, forceUpdate) {
   environment()->Env
   maxN<-10000
   minN<-5
