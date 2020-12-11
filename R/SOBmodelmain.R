@@ -490,7 +490,7 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
 
   # Summary of Outcomes for the Test Year..
 
-  # factor(Labels, levels= c(newNegClassLabel,newPosClassLabel)) -> Labels
+  factor(Labels, levels= c(newNegClassLabel,newPosClassLabel)) -> Labels
 
   roc2 <- pROC::roc(
     response = Labels,
@@ -515,7 +515,7 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
 
   as.factor(final_preds) -> final_preds
 
-  caret::confusionMatrix(final_preds, Labels, positive = levels(Labels)[1]) -> CM
+  caret::confusionMatrix(final_preds, Labels, positive = levels(Labels)[2]) -> CM
 
   predDF$Prediction <- final_preds
 
