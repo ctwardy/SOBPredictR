@@ -18,7 +18,10 @@ SOBmodelTrain(
   outages = FALSE,
   mainDir,
   modelUpdate,
-  forceUpdate
+  forceUpdate,
+  rfe,
+  CVfolds,
+  Trainsplit
 )
 }
 \arguments{

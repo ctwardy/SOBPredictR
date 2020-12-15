@@ -10,6 +10,7 @@ PipeIntensity(
   asset_data,
   work_Order_Data,
   CohortID,
+  KnownCohorts,
   cohortFailure,
   test_start,
   test_end

@@ -116,9 +116,9 @@ modelPreProc<- function(combined.df, predictors, classification, Nfailcutoff,  o
   Test$SOB<-NULL
   preproc <- recipes::recipe(ActualFailTest ~ ., data = Train) %>%
     recipes::step_other(recipes::all_nominal(), threshold = .01, other = "other values") %>%
-    recipes::step_dummy(recipes::all_nominal(), one_hot=TRUE)  %>%
-    recipes::step_center(recipes::all_predictors(), -dplyr::contains("Pipe.Material")) %>%
-    recipes::step_scale(recipes::all_predictors(), -dplyr::contains("Pipe.Material"))
+    recipes::step_dummy(recipes::all_nominal(), one_hot=TRUE)  #%>%
+    #recipes::step_center(recipes::all_predictors(), -dplyr::contains("Pipe.Material")) %>%
+    #recipes::step_scale(recipes::all_predictors(), -dplyr::contains("Pipe.Material"))
 
   recipes::prep(preproc, training = Train)->trained_rec
 
@@ -428,16 +428,14 @@ GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, p
   response <- "ActualFail"
   predictors <- setdiff(names(dftrain.hex), response)
 
-  #nfolds<-10  #test with small number,  use n=10 for production
-
   #Model 1 Grid search
 
-  gbm_params1 <- list(learn_rate = c(0.01, 0.1, 0.5), #
-                      max_depth = c(4,5,6,8),  #
-                      sample_rate = c(0.8,1.0), #
-                      ntrees = c(10,20,30),  #100,150,200,300,500
-                      learn_rate_annealing = c(0.96,1), #
-                      col_sample_rate = c(0.8,1.0)) #
+  gbm_params1 <- list(learn_rate = c(0.1, 0.5), #
+                      max_depth = c(8,10,12,14),  #
+                      sample_rate = c(0.8), #
+                      ntrees = c(15,20, 25, 30, 100),  #100,150,200,300,500
+                      learn_rate_annealing = c(1), #
+                      col_sample_rate = c(0.8)) #
 
   gbmmodel <- h2o::h2o.grid(
     algorithm="gbm",
@@ -450,7 +448,7 @@ GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, p
     balance_classes =FALSE,
     keep_cross_validation_predictions = TRUE,
     nfolds = nfolds,
-    fold_assignment = "Modulo",
+    fold_assignment = "Stratified",
     calibrate_model=FALSE,
     stopping_rounds = 3,        ##
     stopping_tolerance = 0.001,  ##
@@ -460,25 +458,26 @@ GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, p
     search_criteria = list(strategy = "Cartesian")  #RandomDiscrete
   )
 
+  gbmmodel@summary_table
   ## Sort by f1
 
   if (classification) {grid <- h2o::h2o.getGrid("gbm_grid",sort_by="f1",decreasing=TRUE)
   } else {grid <- h2o::h2o.getGrid("gbm_grid",sort_by="rmse",decreasing=FALSE)}
 
-  model <- h2o::h2o.getModel(grid@model_ids[[1]])
+  # model <- h2o::h2o.getModel(grid@model_ids[[1]])
 
-  if (classification){
-    h2o::h2o.confusionMatrix(model, newdata = train, metrics="f1")
-    h2o::h2o.confusionMatrix(model, newdata = dftest.hex, metrics="f1")
-    h2o::h2o.confusionMatrix(model, newdata = valid, metrics="f1")
-    perf1 <- h2o::h2o.performance(model, newdata = dftest.hex)
-  }
+  # if (classification){
+  #   h2o::h2o.confusionMatrix(model, newdata = train, metrics="f1")
+  #   h2o::h2o.confusionMatrix(model, newdata = dftest.hex, metrics="f1")
+  #   h2o::h2o.confusionMatrix(model, newdata = valid, metrics="f1")
+  #   perf1 <- h2o::h2o.performance(model, newdata = dftest.hex)
+  # }
 
   #Model 2 Grid search
   hyper_params2 <- list(
-    max_depth = c(4,5,6,8), #
-    sample_rate = c(0.8,1.0),#
-    ntrees = c(10,20,50)  #110, 140, 170, 500
+    max_depth = c(8,10,12,14), #
+    sample_rate = c(1.0),#
+    ntrees = c(15,20, 25, 30, 100)  #110, 140, 170, 500
   )
 
   drfmodel <- h2o::h2o.grid(
@@ -492,7 +491,7 @@ GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, p
     validation_frame=valid,
     keep_cross_validation_predictions = TRUE,
     nfolds=nfolds,
-    fold_assignment = "Modulo",
+    fold_assignment = "Stratified",
     calibrate_model=FALSE,       ## use 70% of the columns to fit each tree
     stopping_rounds = 3,        ##
     stopping_tolerance = 0.001,  ##
@@ -506,50 +505,86 @@ GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, p
   ## Sort by f1
   grid2 <- h2o::h2o.getGrid("drf_grid",sort_by="f1",decreasing=TRUE)
   model <- h2o::h2o.getModel(grid2@model_ids[[1]])
-  perf1 <- h2o::h2o.performance(model, newdata = dftest.hex)
+  perf2 <- h2o::h2o.performance(model, newdata = dftest.hex)
 
+
+  #Abandon DL model
 
   #Model 3 Grid search
-  hyper_params3 <- list(
-    hidden=list(c(40),c(45,50),c(15,10,12),c(90,80)), #
-    rate=c(0.0001,0.002,0.01),  #
-    #rate_annealing=c(1e-8,1e-7,1e-6),
-    #l1=c(0,0.001,0.00001),
-    epochs =c(10, 50, 200, 1000)  #10, 50, 200, 1000,
-  )
+  # hyper_params3 <- list(
+  #   hidden=list(c(40),c(45,50),c(15,10,12),c(90,80)), #
+  #   rate=c(0.0001,0.002,0.01),  #
+  #   #rate_annealing=c(1e-8,1e-7,1e-6),
+  #   #l1=c(0,0.001,0.00001),
+  #   epochs =c(125, 200, 1000)  #10, 50, 200, 1000,
+  # )
+  #
+  #
+  # #dlmodel <- h2o.deeplearning(
+  # dlmodel <- h2o::h2o.grid(
+  #   algorithm="deeplearning",
+  #   seed=1234,
+  #   grid_id="dl_grid",
+  #   x=predictors,
+  #   y=response,
+  #   training_frame=train,
+  #   validation_frame=valid,
+  #   keep_cross_validation_predictions=TRUE,
+  #   activation="TanhWithDropout",  #"Tanh", "TanhWithDropout", "Rectifier", "RectifierWithDropout", "Maxout", "MaxoutWithDropout"
+  #   loss = "Automatic",     #("Automatic", "CrossEntropy","Quadratic", "ModifiedHuber
+  #   #score_validation_samples=1000,      ## sample the validation dataset (faster)
+  #   overwrite_with_best_model=TRUE,
+  #   stopping_rounds=3,
+  #   stopping_metric="AUC", ## "AUTO", "deviance", "logloss", "MSE", "RMSE","MAE", "RMSLE", "AUC", "lift_top_group", "misclassification","mean_per_class_error", "custom", "custom_increasing")
+  #   stopping_tolerance=0.001,
+  #   nfolds=nfolds,
+  #   fold_assignment="Stratified", # can be "AUTO", "Modulo", "Random" or "Stratified"
+  #   balance_classes=FALSE,## enable this for high class imbalance
+  #   adaptive_rate=FALSE,
+  #   #rate=0.001,                    ## manually tuned learning rate
+  #   #rate_annealing=2e-6,
+  #   #momentum_start=0.2,             ## manually tuned momentum
+  #   #momentum_stable=0.4,
+  #   #momentum_ramp=1e7,
+  #   l1=0.01,                        ## add some L1/L2 regularization
+  #   l2=0.01,
+  #   hyper_params=hyper_params3,
+  #   max_w2=10                  ## helps stability for Rectifier
+  # )
 
 
-  #dlmodel <- h2o.deeplearning(
-  dlmodel <- h2o::h2o.grid(
-    algorithm="deeplearning",
-    seed=1234,
-    grid_id="dl_grid",
-    x=predictors,
-    y=response,
-    training_frame=train,
-    validation_frame=valid,
-    keep_cross_validation_predictions=TRUE,
-    activation="TanhWithDropout",  #"Tanh", "TanhWithDropout", "Rectifier", "RectifierWithDropout", "Maxout", "MaxoutWithDropout"
-    loss = "Automatic",     #("Automatic", "CrossEntropy","Quadratic", "ModifiedHuber
-    #score_validation_samples=1000,      ## sample the validation dataset (faster)
-    overwrite_with_best_model=TRUE,
-    stopping_rounds=3,
-    stopping_metric="AUC", ## "AUTO", "deviance", "logloss", "MSE", "RMSE","MAE", "RMSLE", "AUC", "lift_top_group", "misclassification","mean_per_class_error", "custom", "custom_increasing")
-    stopping_tolerance=0.001,
-    nfolds=nfolds,
-    fold_assignment="Modulo", # can be "AUTO", "Modulo", "Random" or "Stratified"
-    balance_classes=FALSE,## enable this for high class imbalance
-    adaptive_rate=FALSE,
-    #rate=0.001,                    ## manually tuned learning rate
-    #rate_annealing=2e-6,
-    #momentum_start=0.2,             ## manually tuned momentum
-    #momentum_stable=0.4,
-    #momentum_ramp=1e7,
-    l1=0.01,                        ## add some L1/L2 regularization
-    l2=0.01,
-    hyper_params=hyper_params3,
-    max_w2=10                  ## helps stability for Rectifier
-  )
+  # ## Sort by f1
+  # grid3 <- h2o::h2o.getGrid("dl_grid",sort_by="f1",decreasing=TRUE)
+  # model <- h2o::h2o.getModel(grid3@model_ids[[1]])
+  # perf3 <- h2o::h2o.performance(model, newdata = dftest.hex)
+
+
+#Model 3  naive bayes  New
+  # Build and train the model:
+  nb_model <- h2o::h2o.naiveBayes(x=predictors,
+                            y=response,
+                            training_frame=train,
+                            validation_frame=valid,
+                            laplace = 0,
+                            fold_assignment="Stratified",
+                            nfolds = nfolds,
+                            keep_cross_validation_predictions=TRUE,
+                            seed = 1234)
+
+ # Model 4 GLM
+
+  glm <- h2o::h2o.glm(family = "binomial",
+                          x = predictors,
+                          y = response,
+                          training_frame=train,
+                          validation_frame=valid,
+                          lambda = 0,
+                      fold_assignment="Stratified",
+                      nfolds = nfolds,
+                      keep_cross_validation_predictions=TRUE,
+                      seed = 1234,
+                          compute_p_values = FALSE)
+
 
   # Compare to base learner performance on the test set
   .getauc <- function(mm) h2o::h2o.auc( h2o::h2o.performance(h2o::h2o.getModel(mm), newdata = dftest.hex))
@@ -557,10 +592,7 @@ GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, p
     max(FD@metrics$thresholds_and_metric_scores$f1, na.rm = TRUE)
   }
 
-  ## Sort by f1
-  grid3 <- h2o::h2o.getGrid("dl_grid",sort_by="f1",decreasing=TRUE)
-  model <- h2o::h2o.getModel(grid3@model_ids[[1]])
-  perf3 <- h2o::h2o.performance(model, newdata = dftest.hex)
+
 
   list()->f1
   for(i in 1: nrow(grid@summary_table)){
@@ -587,37 +619,44 @@ GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, p
   which.max(f1_2)->modid2
   best_model2 <- h2o::h2o.getModel(grid2@model_ids[[modid2]])
 
-  list()->f3
-  for(i in 1: nrow(grid3@summary_table)){
-    print(i)
-    #grid@summary_table[139,]
-    best_model3 <- h2o::h2o.getModel(grid3@model_ids[[i]])
-    h2o::h2o.performance(best_model3, newdata=dftest.hex) ->fd  ## full validation data
-    max(fd@metrics$thresholds_and_metric_scores$f1, na.rm = TRUE)->f3[[i]]
-  }
-
-  do.call(rbind, f3)->f1_3
-  which.max(f1_3)->modid3
-  best_model3 <- h2o::h2o.getModel(grid3@model_ids[[modid3]])
+  # list()->f3
+  # for(i in 1: nrow(grid3@summary_table)){
+  #   print(i)
+  #   #grid@summary_table[139,]
+  #   best_model3 <- h2o::h2o.getModel(grid3@model_ids[[i]])
+  #   h2o::h2o.performance(best_model3, newdata=dftest.hex) ->fd  ## full validation data
+  #   max(fd@metrics$thresholds_and_metric_scores$f1, na.rm = TRUE)->f3[[i]]
+  # }
+  #
+  # do.call(rbind, f3)->f1_3
+  # which.max(f1_3)->modid3
+  # best_model3 <- h2o::h2o.getModel(grid3@model_ids[[modid3]])
 
   perf1 <- h2o::h2o.performance(best_model, newdata = dftest.hex)
   perf2 <- h2o::h2o.performance(best_model2, newdata = dftest.hex)
-  perf3 <- h2o::h2o.performance(best_model3, newdata = dftest.hex)
-
+  perf3 <- h2o::h2o.performance(nb_model, newdata = dftest.hex)
+  perf4 <- h2o::h2o.performance(glm, newdata = dftest.hex)
   # Train a stacked ensemble using the GBM grid
 
   length(grid@model_ids)->L1
   length(grid2@model_ids)->L2
-  length(grid3@model_ids)->L3
-
+  #length(grid3@model_ids)->L3
 
   ensemble2 <- h2o::h2o.stackedEnsemble(
     x=predictors,
     y=response,
     training_frame = train,
+    validation_frame=valid,
     model_id = "ensemble",
-    metalearner_algorithm="glm",
-    base_models = c(sample(grid3@model_ids,round(0.8*L3,0)), sample(grid2@model_ids,round(0.8*L2,0)),sample(grid@model_ids,round(0.8*L1,0)))
+    metalearner_nfolds = nfolds,
+    metalearner_fold_assignment = "Stratified",
+    metalearner_algorithm="AUTO",
+    seed=1234,
+    base_models = c(sample(grid@model_ids,round(0.9*L1,0)),
+                    sample(grid2@model_ids,round(0.9*L2,0)),
+                    glm,
+                    nb_model)
+                    #sample(grid@model_ids,round(0.8*L1,0)))
     #base_models = list(best_model, best_model2, best_model3)
   )
 
@@ -630,19 +669,24 @@ GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, p
   baselearner_aucs2 <- sapply(grid2@model_ids, .getauc)
   baselearner_best_auc_test2 <- max(baselearner_aucs2)
 
-  baselearner_aucs3 <- sapply(grid3@model_ids, .getauc)
-  baselearner_best_auc_test3 <- max(baselearner_aucs3)
+  # baselearner_aucs3 <- sapply(grid3@model_ids, .getauc)
+  # baselearner_best_auc_test3 <- max(baselearner_aucs3)
+
+  baselearner_best_auc_test3 <- perf3@metrics$AUC
+
+  baselearner_best_auc_test4 <- perf4@metrics$AUC
 
   ensemble_auc_test <- h2o::h2o.auc(perf)
 
   best_F1 <- sapply(grid@model_ids[[modid]], .getF1)
   best_F2 <- sapply(grid2@model_ids[[modid2]], .getF1)
-  best_F3 <- sapply(grid3@model_ids[[modid3]], .getF1)
+  best_F3 <- max(perf3@metrics$thresholds_and_metric_scores$f1)
+  best_F4 <- max(perf4@metrics$thresholds_and_metric_scores$f1)
 
   print(sprintf("Best Base-learner Test AUC:  %s", baselearner_best_auc_test))
   print(sprintf("Best Base-learner2 Test AUC:  %s", baselearner_best_auc_test2))
   print(sprintf("Best Base-learner3 Test AUC:  %s", baselearner_best_auc_test3))
-
+  print(sprintf("Best Base-learner4 Test AUC:  %s", baselearner_best_auc_test4))
   print(sprintf("Ensemble Test AUC:  %s", ensemble_auc_test))
 
   ensemble_F1_test <- sapply(ensemble2@model_id, .getF1)
@@ -651,10 +695,12 @@ GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, p
   print(sprintf("Best Base-learner Test F1:  %s", best_F1))
   print(sprintf("Best Base-learner2 Test F1:  %s", best_F2))
   print(sprintf("Best Base-learner3 Test F1:  %s", best_F3))
+  print(sprintf("Best Base-learner4 Test F1:  %s", best_F4))
   print(sprintf("Ensemble Test F1:  %s", ensemble_best_F1))
 
-  which.max(c(best_F1, best_F2, best_F3, ensemble_best_F1))->minModelID
-  c(best_model, best_model2, best_model3, ensemble2)->all_models
+  which.max(c(best_F1, best_F2, best_F3, best_F4, ensemble_best_F1))->minModelID
+  c(best_model, best_model2, glm,
+    nb_model, ensemble2)->all_models
 
   finalModel<-all_models[[minModelID]]
 
@@ -671,6 +717,7 @@ GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, p
   # and interpreters. This file is required when MOJO models are deployed
   # to production. Be sure to specify the entire path, not just the relative path.
 
+  perf <- h2o::h2o.performance(finalModel, newdata = dftest.hex)
 
   #modelfile <-  h2o.download_mojo(finalModel, path=getwd(), get_genmodel_jar=TRUE)
 
@@ -679,7 +726,7 @@ GBMstackedensemble<-function(classification, dftrain, dftest, upsample, SMOTE, p
   h2o::h2o.confusionMatrix(finalModel, newdata=dftest.hex, metric="f1")->confMat
   h2o::h2o.confusionMatrix(finalModel, newdata=dftrain.hex, metric="f1")->confMatTrain
 
-  list(perf=perf, conf=confMat, confTrain=confMatTrain, finalModel=finalModel, GBMgrid=grid, RFgrid=grid2, bestMod=minModelID, stackedGBMPath)->result
+  list(perf=perf, conf=confMat, confTrain=confMatTrain, finalModel=finalModel, GBMgrid=grid, RFgrid=grid2, bestMod=minModelID, path=stackedGBMPath)->result
 
   return(result)
 

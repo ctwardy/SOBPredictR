@@ -16,6 +16,8 @@ SOBmodelPredict(
   outages = FALSE,
   predictors,
   ModelObj,
+  mainDir,
+  ModelPath,
   forceUpdate
 )
 }

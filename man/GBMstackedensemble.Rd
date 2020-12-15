@@ -4,7 +4,16 @@
 \alias{GBMstackedensemble}
 \title{Trains a stacked ensemble model using H20}
 \usage{
-GBMstackedensemble(classification, dftrain, dftest, upsample, SMOTE, path)
+GBMstackedensemble(
+  classification,
+  dftrain,
+  dftest,
+  upsample,
+  SMOTE,
+  path,
+  nfolds,
+  R
+)
 }
 \arguments{
 \item{classification}{logical}

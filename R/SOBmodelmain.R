@@ -62,7 +62,7 @@ argF <- function(cohorts, predictors, asset_data, soil_data, val_start, val_end,
 #' outages = FALSE, mainDir, savePaths)
 #' }
 SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predictors, val_start,  val_end, test_start, test_end, Nfailcutoff,
-                          outages = FALSE, mainDir, modelUpdate, forceUpdate, rfe, CVfolds,
+                          outages = FALSE, mainDir, modelUpdate, forceUpdate, forcePreProcess, rfe, CVfolds,
                           Trainsplit) {
 
   dir.create(mainDir, showWarnings = FALSE)
@@ -200,7 +200,8 @@ SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predic
   } else{ readRDS(SOBOutput_path) ->SOB_table_results}
 
   # model
-if(modelUpdate==TRUE){
+
+  if(!file.exists(ModelInput_path)|forcePreProcess==TRUE){
   modelPreProc(
     combined.df = SOB_table_results,
     predictors = predictors,
@@ -208,12 +209,15 @@ if(modelUpdate==TRUE){
     Nfailcutoff = Nfailcutoff,
     outlierRemove = FALSE
   ) -> DF
+  saveRDS(DF, ModelInput_path)
+} else{readRDS(ModelInput_path)->DF}
 
   DF$data[[1]] -> trainData
   DF$data[[2]] -> valData
   DF$data[[3]] -> SOBIDsTrain
   DF$data[[4]] -> SOBIDsTest
 
+if(modelUpdate==TRUE){
   GBMstackedensemble(
     classification = TRUE,
     dftrain = trainData,
@@ -225,11 +229,10 @@ if(modelUpdate==TRUE){
     path = modelSavePath
   ) -> ModelOut
 
-  saveRDS(DF, ModelInput_path)
+
   saveRDS(ModelOut, ModelOutput_path)
 
-} else{DF=readRDS(ModelInput_path)
-       ModelOut =readRDS(ModelOutput_path)
+} else{ModelOut =readRDS(ModelOutput_path)
        }
   list(CohortWOs=CohortInput, CohortTable = Cohort_table_results, SOBInput = NHPPinput, SOBOutput = SOB_table_results, ModelInput = DF, ModelOutput = ModelOut) -> resultList
   return(resultList)
@@ -401,7 +404,8 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
 
   ###  Step4 - Note that accuracy and CM reporting only possible when running a full back test,  i.e where the second period is in the past.
 
-  modelPreProc_update(
+  if(!file.exists(ModelInput_path)|forceUpdate==TRUE)
+ {modelPreProc_update(
       combined.df = SOB_table_results,
       predictors = predictors,
       classification = TRUE,
@@ -410,6 +414,7 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
       trained_rec = trained_rec
 
     ) -> DF
+  saveRDS(DF, ModelInput_path) } else{readRDS(ModelInput_path)->DF }
 
   DF$data[[1]] -> trainData
   DF$data[[2]] -> valData
@@ -442,9 +447,7 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
 
   #h2o::h2o.confusionMatrix(GBMModel, newdata = ModelData, metric = "f1") -> CM
 
-
-  h2o::h2o.varimp(GBMModel)
-  h2o::h2o.varimp_plot(GBMModel, 10)-> VarImpPlot
+  if(GBMModel@algorithm=="gbm") h2o::h2o.varimp_plot(GBMModel, 10)-> VarImpPlot
   h2o::h2o.performance(GBMModel, newdata = ModelData) -> performance
   performance@metrics$max_criteria_and_metric_scores %>%
     dplyr::filter(metric == "max f2") %>%
@@ -509,18 +512,33 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
   pROC::coords(roc2, "local maximas", ret = c("threshold", "sens", "spec", "ppv", "npv"), transpose = FALSE) -> ResultTable
 
   #Metrs[[1]]-> Thr
-  #0.5-> Thr
+  #0.98-> Thr
   Th[, ] -> Thr
   final_preds <- ifelse(Predictions >= Thr, newPosClassLabel, newNegClassLabel)
 
   as.factor(final_preds) -> final_preds
-
+  factor(final_preds, levels= c(newNegClassLabel,newPosClassLabel)) -> final_preds
   caret::confusionMatrix(final_preds, Labels, positive = levels(Labels)[2]) -> CM
 
   predDF$Prediction <- final_preds
 
-  list(predDF=predDF, CohortWOs=CohortInput, CohortTable = Cohort_table_results, SOBInput = NHPPinput, SOBOutput = SOB_table_results, CM=CM, f1=  CM$byClass[7], Threshold=Thr, roc=roc2, varImp=VarImpPlot) -> resultList
-
+  if(GBMModel@algorithm=="gbm"){
+  list(predDF=predDF, Predictions=Predictions, Labels=Labels, CohortWOs=CohortInput, CohortTable = Cohort_table_results, SOBInput = NHPPinput, SOBOutput = SOB_table_results, CM=CM, f1=  CM$byClass[7], Threshold=Thr, roc=roc2, varImp=VarImpPlot) -> resultList
+  } else{list(predDF=predDF, Predictions=Predictions, Labels=Labels, CohortWOs=CohortInput, CohortTable = Cohort_table_results, SOBInput = NHPPinput, SOBOutput = SOB_table_results, CM=CM, f1=  CM$byClass[7], Threshold=Thr, roc=roc2) -> resultList}
   return(resultList)
 }
 
+
+ModPred<-function(Predictions, Labels, predDF, Thr, newPosClassLabel, newNegClassLabel){
+
+  final_preds <- ifelse(Predictions >= Thr, newPosClassLabel, newNegClassLabel)
+  as.factor(final_preds) -> final_preds
+  factor(final_preds, levels= c(newNegClassLabel,newPosClassLabel)) -> final_preds
+  caret::confusionMatrix(final_preds, Labels, positive = levels(Labels)[2]) -> CM
+
+  predDF$Prediction <- final_preds
+
+  list(CM, predDF)->out
+  return(out)
+
+}
