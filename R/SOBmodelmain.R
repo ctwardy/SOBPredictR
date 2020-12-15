@@ -62,7 +62,7 @@ argF <- function(cohorts, predictors, asset_data, soil_data, val_start, val_end,
 #' outages = FALSE, mainDir, savePaths)
 #' }
 SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predictors, val_start,  val_end, test_start, test_end, Nfailcutoff,
-                          outages = FALSE, mainDir, modelUpdate, forceUpdate, forcePreProcess, rfe, CVfolds,
+                          outages = FALSE, mainDir, modelUpdate, rmOutlier, forceUpdate, forcePreProcess, rfe, CVfolds,
                           Trainsplit) {
 
   dir.create(mainDir, showWarnings = FALSE)
@@ -207,7 +207,7 @@ SOBmodelTrain <- function(workorder_data, asset_data, soil_data, SOB_data,predic
     predictors = predictors,
     classification = TRUE,
     Nfailcutoff = Nfailcutoff,
-    outlierRemove = FALSE
+    outlierRemove = rmOutlier
   ) -> DF
   saveRDS(DF, ModelInput_path)
 } else{readRDS(ModelInput_path)->DF}
@@ -262,7 +262,7 @@ if(modelUpdate==TRUE){
 #' outages = FALSE, predictors, ModelObj)
 #' }
 SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val_start,  val_end, test_start, test_end,
-                            outages = FALSE, predictors, ModelObj, mainDir, ModelPath, forceUpdate) {
+                            outages = FALSE, predictors, ModelObj, mainDir, ModelPath, forcePreProcess, forceUpdate, rmOutlier) {
   environment()->Env
   maxN<-10000
   minN<-5
@@ -404,13 +404,13 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
 
   ###  Step4 - Note that accuracy and CM reporting only possible when running a full back test,  i.e where the second period is in the past.
 
-  if(!file.exists(ModelInput_path)|forceUpdate==TRUE)
+  if(!file.exists(ModelInput_path)|forcePreProcess==TRUE)
  {modelPreProc_update(
       combined.df = SOB_table_results,
       predictors = predictors,
       classification = TRUE,
       Nfailcutoff = Nfailcutoff,
-      outlierRemove = FALSE,
+      outlierRemove = rmOutlier,
       trained_rec = trained_rec
 
     ) -> DF
