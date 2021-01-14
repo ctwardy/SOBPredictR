@@ -447,7 +447,6 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
 
   #h2o::h2o.confusionMatrix(GBMModel, newdata = ModelData, metric = "f1") -> CM
 
-  if(GBMModel@algorithm=="gbm") h2o::h2o.varimp_plot(GBMModel, 10)-> VarImpPlot
   h2o::h2o.performance(GBMModel, newdata = ModelData) -> performance
   performance@metrics$max_criteria_and_metric_scores %>%
     dplyr::filter(metric == "max f2") %>%
@@ -522,9 +521,7 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
 
   predDF$Prediction <- final_preds
 
-  if(GBMModel@algorithm=="gbm"){
-  list(predDF=predDF, Predictions=Predictions, Labels=Labels, CohortWOs=CohortInput, CohortTable = Cohort_table_results, SOBInput = NHPPinput, SOBOutput = SOB_table_results, CM=CM, f1=  CM$byClass[7], Threshold=Thr, roc=roc2, varImp=VarImpPlot) -> resultList
-  } else{list(predDF=predDF, Predictions=Predictions, Labels=Labels, CohortWOs=CohortInput, CohortTable = Cohort_table_results, SOBInput = NHPPinput, SOBOutput = SOB_table_results, CM=CM, f1=  CM$byClass[7], Threshold=Thr, roc=roc2) -> resultList}
+ list(predDF=predDF, Predictions=Predictions, Labels=Labels, CohortWOs=CohortInput, CohortTable = Cohort_table_results, SOBInput = NHPPinput, SOBOutput = SOB_table_results, CM=CM, f1=  CM$byClass[7], Threshold=Thr, roc=roc2) -> resultList
   return(resultList)
 }
 
@@ -541,4 +538,9 @@ ModPred<-function(Predictions, Labels, predDF, Thr, newPosClassLabel, newNegClas
   list(CM, predDF)->out
   return(out)
 
+}
+
+VarImp<-function(ModelPath){
+  h2o::h2o.loadModel(ModelPath) -> GBMModel
+  h2o::h2o.varimp_plot(GBMModel, 10)
 }

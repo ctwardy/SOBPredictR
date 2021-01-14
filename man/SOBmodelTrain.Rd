@@ -18,7 +18,9 @@ SOBmodelTrain(
   outages = FALSE,
   mainDir,
   modelUpdate,
+  rmOutlier,
   forceUpdate,
+  forcePreProcess,
   rfe,
   CVfolds,
   Trainsplit

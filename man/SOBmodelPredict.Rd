@@ -18,7 +18,9 @@ SOBmodelPredict(
   ModelObj,
   mainDir,
   ModelPath,
-  forceUpdate
+  forcePreProcess,
+  forceUpdate,
+  rmOutlier
 )
 }
 \arguments{
