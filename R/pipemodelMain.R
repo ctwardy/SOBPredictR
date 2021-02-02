@@ -181,7 +181,7 @@ ZoneResults<-function(PipeResults, PrCutOff, workorder_data, maxLength){
 #' @examples \dontrun{
 #' rankWDZ <- function(WDZPath, SOBResult, N=10)
 #' }
-rankWDZ <- function(WDZPath, SOBResult, N) {
+rankWDZ <- function(WDZPath, SOBResult, N, newPosClassLabel) {
   utils::read.csv(WDZPath) -> WDZ
 
   # Previously Distribution Zone Name Errors needed to be fixed in Asset and WOD tables
@@ -202,8 +202,7 @@ rankWDZ <- function(WDZPath, SOBResult, N) {
   WDZ$Water_Distribution_Zone[WDZ$Water_Distribution_Zone == "<NA>"] <- NA
   WDZ$Status[WDZ$Status == "DECOMMISSIONED"] <- NA
 
-  WDZ %>%
-    dplyr::group_by(Water_Distribution_Zone) %>%
+  WDZ %>% dplyr::group_by(Water_Distribution_Zone) %>%
     dplyr::tally() %>%
     as.data.frame() -> TotSOBperZone
   dplyr::left_join(SOBResult[[1]], WDZ, by = c("SOB" = "Shutoff_Block")) -> SOB_WDZ
@@ -229,15 +228,16 @@ rankWDZ <- function(WDZPath, SOBResult, N) {
 
   Zones <- utils::head(SOBPredperWDZ$Water_Distribution_Zone, N)
 
-  SOB_WDZ %>%
+  SOBPredperWDZ %>%
     dplyr::filter(Water_Distribution_Zone %in% Zones) %>%
     as.data.frame() -> Final
     list(Final, Zones) ->out
   return(out)
 }
 
-pipeModel <- function(workorder_data, asset_data, cohort_data, SOBData, WDZAssetPath, Zones, SOBResult, NHPPResult, TrialDir) {
+pipeModel <- function(workorder_data, asset_data, cohort_data, SOBData, WDZAssetPath, Zones, SOBResult, NHPPResult, ResultPath, TestStart, TestEnd) {
 
+  dir.create(ResultPath)
   # ####  Pipe Modeling Start
 
   workorder_data %>% dplyr::filter(Class.Structure %in% "Repair Burst Water Main" |
@@ -310,7 +310,6 @@ pipeModel <- function(workorder_data, asset_data, cohort_data, SOBData, WDZAsset
     grep("NA,", CohortZoneIDs) -> unknownIDs
     CohortZoneIDs[-unknownIDs] -> CohortZoneIDs
 
-
     # Pipe failure Intensity for all Cohorts i in DZ j
     # how much is the prior distribution influencing the posterior intensity???  how much does the gamma sampling contribute to the variance between assets versus the individual asset failure
     for (i in 1:length(CohortZoneIDs)) {
@@ -323,14 +322,14 @@ pipeModel <- function(workorder_data, asset_data, cohort_data, SOBData, WDZAsset
         {
           suppressWarnings(PipeIntensity(
             DZ = DZs[[j]],
-            SOB = SOBResult$SOB,
+            SOB = SOBResult$predDF$SOB,
             cohortFailure = cohort_data,
             asset_data = asset_data,
             work_Order_Data = workorder_data,
             CohortID=CohortZoneIDs[i],
             KnownCohorts=cohort_IDs,
-            test_start = test_start,
-            test_end = test_end
+            test_start = TestStart,
+            test_end = TestEnd
           )) -> temp
         },
         error = function(e) {
@@ -354,27 +353,27 @@ pipeModel <- function(workorder_data, asset_data, cohort_data, SOBData, WDZAsset
     lapply(ZoneResult[, -c(1, 8, 12, 13, 15)], as.numeric) -> ZoneResult[, -c(1, 8, 12, 13, 15)]
 
 
+    forecastonly <- FALSE
+    if (forecastonly) {
+      ZoneResult %>% dplyr::select(-c("NFail_Test", "TestEnd", "TestStart")) -> ZoneResult
+    }
+
+    gsub(" ", "", (DZs[[j]]), fixed = TRUE) -> DZs[[j]]
+    saveRDS(ZoneResult, paste0(ResultPath, DZs[[j]], ".RDS"))
+
   }
 
   # Consolidate all WDZ results...  Note at moment need to manually copy RDS files from /Outputs
 
   multiplezones <- (length(DZs) > 1)
   if (multiplezones) {
-    filenames <- list.files(path = paste0("Outputs/Trial_FINAL_", subDir), pattern = "\\.RDS$", full.names = TRUE)
+    filenames <- list.files(path = ResultPath, pattern = "\\.RDS$", full.names = TRUE)
     file.info(filenames) -> details
     details <- details[with(details, order(as.POSIXct(mtime))), ]
     filenames <- rownames(details)
 
     r <- lapply(filenames, readRDS)
 
-    dropCols <- function(x) {
-      x %>% dplyr::select(-c("NFail_Test", "TestEnd", "TestStart")) -> x
-    }
-
-    forecastonly <- TRUE
-    if (forecastonly) {
-      r <- lapply(r, dropCols)
-    }
     do.call(rbind, r) -> table_results
   } else {
     (ZoneResult -> table_results)
@@ -418,7 +417,7 @@ pipeModel <- function(workorder_data, asset_data, cohort_data, SOBData, WDZAsset
   )) -> table_results
 
   # Add other data, SOB intensity!
-  colnames(SOBResult)[1] <- "Shutoff.Block"
+  colnames(SOBResult$predDF)[1] <- "Shutoff.Block"
 
   NHPPResult %>% dplyr::select(SOB, PowerLaw1) -> NHPPResult
   colnames(NHPPResult)[1] <- "Shutoff.Block"
@@ -428,12 +427,12 @@ pipeModel <- function(workorder_data, asset_data, cohort_data, SOBData, WDZAsset
   dplyr::left_join(table_results, asset_data, by = "Asset.Number") -> table_results2
 
 
-  dplyr::left_join(SOBResult, NHPPResult, by="Shutoff.Block") ->SOB_result
+  dplyr::left_join(SOBResult$predDF, NHPPResult, by="Shutoff.Block") ->SOB_result
   SOB_result$PowerLaw1[is.na(SOB_result$PowerLaw1)]<-0
 
   # check for duplicates in combined,  we have.  why?
   #SOBResult[-which(duplicated(SOBResult$Shutoff.Block)), ] -> SOBResult
-  dplyr::left_join(table_results2, SOBResult, by = "Shutoff.Block") -> table_results2
+  dplyr::left_join(table_results2, SOBResult$predDF, by = "Shutoff.Block") -> table_results2
 
   data.frame(SOBData$`Shutoff Block`, SOBData$`Shutoff Number of slids`) ->SOBSLID
   colnames(SOBSLID)[1] <- "Shutoff.Block"

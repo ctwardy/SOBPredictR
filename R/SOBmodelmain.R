@@ -526,6 +526,19 @@ SOBmodelPredict <- function(workorder_data, asset_data, SOB_data, soil_data, val
 }
 
 
+#' Model Predict
+#'
+#' @param Predictions
+#' @param Labels
+#' @param predDF
+#' @param Thr
+#' @param newPosClassLabel
+#' @param newNegClassLabel
+#'
+#' @return
+#' @export
+#'
+#' @examples
 ModPred<-function(Predictions, Labels, predDF, Thr, newPosClassLabel, newNegClassLabel){
 
   final_preds <- ifelse(Predictions >= Thr, newPosClassLabel, newNegClassLabel)
@@ -540,6 +553,14 @@ ModPred<-function(Predictions, Labels, predDF, Thr, newPosClassLabel, newNegClas
 
 }
 
+#' Variable Importance Plot
+#'
+#' @param ModelPath
+#'
+#' @return
+#' @export
+#'
+#' @examples
 VarImp<-function(ModelPath){
   h2o::h2o.loadModel(ModelPath) -> GBMModel
   h2o::h2o.varimp_plot(GBMModel, 10)

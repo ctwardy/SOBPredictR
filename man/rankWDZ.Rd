@@ -4,7 +4,7 @@
 \alias{rankWDZ}
 \title{rankWDZ}
 \usage{
-rankWDZ(WDZPath, SOBResult, N)
+rankWDZ(WDZPath, SOBResult, N, newPosClassLabel)
 }
 \arguments{
 \item{WDZPath}{character}
