@@ -235,6 +235,23 @@ rankWDZ <- function(WDZPath, SOBResult, N, newPosClassLabel) {
   return(out)
 }
 
+#' PipeModel
+#' Individual pipe intensity modelling
+#' @param workorder_data
+#' @param asset_data
+#' @param cohort_data
+#' @param SOBData
+#' @param WDZAssetPath
+#' @param Zones
+#' @param SOBResult
+#' @param NHPPResult
+#' @param ResultPath
+#' @param TestStart
+#' @param TestEnd
+#'
+#' @return
+#' @export
+
 pipeModel <- function(workorder_data, asset_data, cohort_data, SOBData, WDZAssetPath, Zones, SOBResult, NHPPResult, ResultPath, TestStart, TestEnd) {
 
   dir.create(ResultPath)

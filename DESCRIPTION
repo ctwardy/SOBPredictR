@@ -20,6 +20,7 @@ Imports:
     stats,
     utils,
     magrittr,
+    raster,
     MARSS,
     data.table,
     tidyr,
@@ -51,8 +52,7 @@ Imports:
     purrr,
     recipes,
     scales,
-    zoo,
-    raster
+    zoo
 VignetteBuilder: knitr
 Suggests: 
     rmarkdown
