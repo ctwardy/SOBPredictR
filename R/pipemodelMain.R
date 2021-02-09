@@ -325,7 +325,8 @@ pipeModel <- function(workorder_data, asset_data, cohort_data, SOBData, WDZAsset
 
     CohortZoneIDs[,] ->CohortZoneIDs
     grep("NA,", CohortZoneIDs) -> unknownIDs
-    CohortZoneIDs[-unknownIDs] -> CohortZoneIDs
+    if(length(unknownIDs)>0)
+    {CohortZoneIDs[-unknownIDs] -> CohortZoneIDs}
 
     # Pipe failure Intensity for all Cohorts i in DZ j
     # how much is the prior distribution influencing the posterior intensity???  how much does the gamma sampling contribute to the variance between assets versus the individual asset failure
